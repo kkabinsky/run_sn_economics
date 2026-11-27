@@ -13,3 +13,4 @@ outputs/
 results/rerun_*/
 *.tmp
 ~$*.xlsx
+catboost_info/
