@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Money management ของ backtest (แบบ sniper trade)</h1>
+
+<div class="panel">
+  <p class="hint">
+    Backtest ของงานที่แก้ไขไม่ได้เทรดสัญญาณดิบ แต่เทรดผ่านกฎ money management ด้านล่าง
+    และผลที่รายงานใน paper คือผลของ backtest นั้น
+  </p>
+  <div class="grid">
+    <table class="grid">
+      <thead>
+        <tr><th>องค์ประกอบ</th><th>กฎ</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>สัญญาณ</strong></td>
+            <td>ตอนปิดตลาดวัน $t$ ใช้ forecast ของวัน $t+1$ เทียบกับราคาปิด $P_t$
+                (ไม่มี look-ahead)</td></tr>
+        <tr><td><strong>ตัวกรองการเข้า</strong></td>
+            <td>เข้าเมื่อ edge ≥ 0.5 ATR, ATR อยู่ในช่วง 0.4–8% ของราคา
+                และทิศทางตรงกับ MA20</td></tr>
+        <tr><td><strong>ขนาดสถานะ</strong></td>
+            <td>ความเสี่ยง 1% ของทุน ÷ ระยะถึง stop (1.5 ATR) · เพดาน 20% ต่อหุ้น
+                และ 80% รวมทั้งพอร์ต</td></tr>
+        <tr><td><strong>การปิดสถานะ</strong></td>
+            <td>stop 1.5 ATR · target 3 ATR · เมื่อกำไรถึง 1R ย้าย stop ไปที่จุดเข้า
+                แล้วเลื่อนตามราคา 1 ATR · ปิดครบ 10 วัน · ปิดท้ายช่วงทดสอบ</td></tr>
+        <tr><td><strong>กฎระดับพอร์ต</strong></td>
+            <td>เปิดพร้อมกันไม่เกิน 5 ไม้ · วันที่ขาดทุนเกิน 2% ไม่เปิดไม้ใหม่ ·
+                แพ้ 3 ครั้งติด พัก 5 วัน</td></tr>
+        <tr><td><strong>ต้นทุน</strong></td>
+            <td>20 bps ต่อหน่วยการหมุนเงิน คิดทั้งตอนเข้าและตอนออก</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>ผลลัพธ์ — เทียบกับสัญญาณแบบเปิดสถานะตลอด (always-on)</h2>
+  <table class="grid">
+    <thead>
+      <tr><th>Regime</th><th>W</th><th>โมเดล</th><th>เปิดสถานะตลอด</th>
+          <th>มี MM</th><th>ผลต่าง</th><th>เทรด</th><th>Win rate</th>
+          <th>Sharpe</th><th>Max DD</th><th>เวลาในตลาด</th></tr>
+    </thead>
+    <tbody>
+      {% for row in mm %}
+      <tr>
+        <td>{{ row.regime }}</td>
+        <td>{{ row.window_text }}</td>
+        <td>{{ row.model }}</td>
+        <td>{{ row.always_on_pct }}%</td>
+        <td class="{{ 'good' if row.mm_pct and row.mm_pct[0] != '-' else 'bad' }}">
+            {{ row.mm_pct }}%</td>
+        <td>{{ row.difference_pct }}%</td>
+        <td>{{ row.trades }}</td>
+        <td>{{ row.win_pct }}%</td>
+        <td>{{ row.sharpe_text }}</td>
+        <td>{{ row.dd_pct }}%</td>
+        <td>{{ row.time_pct }}%</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="hint">
+    RandomWalk ไม่เปิดสถานะเลย (0 เทรด) เพราะ edge เป็นศูนย์ — คือหลักการพิสูจน์ว่ากฎ
+    ผูกกับ forecast ไม่ใช่กับราคา · โปรแกรมตรวจสมดุลบัญชีตัวเอง: equity สุดท้ายต้องเท่ากับ
+    ทุนเริ่มต้น + กำไรของทุกเทรด (ผลต่างต่ำกว่า 2×10⁻⁹ ทั้ง 30 ช่อง)
+  </p>
+</div>
+
+<div class="panel">
+  <h2>ข้อมูลดิบและการทำซ้ำ</h2>
+  <p>
+    <a href="/release/mm/mm_vs_baseline.csv">mm_vs_baseline.csv</a> ·
+    <a href="/release/mm/mm_metrics.csv">mm_metrics.csv</a> ·
+    <a href="/release/mm/mm_trades.csv">mm_trades.csv</a> (log ทุกเทรด) ·
+    <a href="/release/mm/rules.json">rules.json</a> ·
+    <a href="/release/results/answer_money_management.pdf">จดหมายตอบ reviewer เรื่อง MM</a> ·
+    <a href="/release/results/answer_sn_economics7_final.pdf">จดหมายตอบ reviewer ฉบับเต็ม</a>
+  </p>
+  <p class="hint">
+    รันซ้ำ: <code>python run_mm.py --run output --regimes crash normal --windows 5 10 30
+    --models CatBoost LightGBM cGAN Static_Hybrid RandomWalk --data-root input</code>
+    (Static Hybrid = 0.5×CatBoost + 0.5×cGAN ตามกฎของโค้ดเดิม บรรทัด 765)
+  </p>
+</div>
+{% endblock %}
