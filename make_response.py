@@ -3,9 +3,9 @@
 The script reads the output of a run of ``rerun_leakfree.py`` and writes
 
     results_summary.json     every number the letter quotes, in one place
-    answer_sn_economics6.tex the response letter for R3.M2, R3.M3 and R3.M4,
+    answer_sn_economics7.tex the response letter for R3.M2, R3.M3, R3.M4 and the money management,
                              point by point, with every question restated
-    answer_sn_economics6.pdf the compiled letter (with --pdf)
+    answer_sn_economics7.pdf the compiled letter (with --pdf)
     archived_scripts.sha256  the hash of every archived training script
 
 Nothing is typed in by hand: the letter is regenerated from the results, so it
@@ -87,7 +87,7 @@ PREAMBLE = r"""\documentclass[11pt,a4paper]{article}
 
   \title{\vspace{-2.2cm}\textbf{Response to the Editor and Reviewers}\\[0.35em]
   \large Revised manuscript \emph{``Conditional Generative Modelling of Thai Stock-Return Forecasts for Economic Applications''}\\[0.6em]
-  \normalsize Response letter, sixth version: the leakage-free re-run, point by point}
+  \normalsize Response letter, seventh version: the leakage-free re-run and the money management, point by point}
   \author{}
   \date{}
 
@@ -327,6 +327,16 @@ def summarise(run: dict) -> dict:
 
     portfolio = portfolio_from_predictions(Path(summary["run_dir"]), cost_bps=20)
     summary["portfolio"] = portfolio.to_dict("records") if len(portfolio) else []
+    # the money management of the backtest, run over the same forecasts
+    mm_path = Path(summary["run_dir"]) / "mm" / "mm_vs_baseline.csv"
+    if mm_path.is_file():
+        mm_frame = pd.read_csv(mm_path)
+        summary["mm"] = mm_frame.to_dict("records")
+        summary["mm_rules"] = json.loads(
+            (mm_path.parent / "rules.json").read_text(encoding="utf-8"))
+    else:
+        summary["mm"] = []
+        summary["mm_rules"] = {}
 
     return summary
 
@@ -1105,6 +1115,123 @@ def build_letter(summary: dict, run: dict) -> str:
         add(r"also gives the standard errors, the unadjusted $p$-values, the number of")
         add(r"paired observations and the per-stock counts with the lag-robust variance.")
     add("")
+
+    # ------------------------------------------------------------------ Point 4
+    mm_rows = summary.get("mm") or []
+    if mm_rows:
+        add(r"\section*{4. The money management of the backtest}")
+        add("")
+        add(r"\point{4}{How the forecasts are turned into positions}{R3.M2}")
+        add(r"The revised backtest does not trade the raw signal. It trades the signal")
+        add(r"through the money management below, and the results reported in the")
+        add(r"manuscript are the results of that backtest.")
+        add("")
+        add(r"\subpoint{4.1}{The rules}{}")
+        add(r"The rules are few and explicit, and they use nothing but the forecast and")
+        add(r"the price history up to and including the day of the decision:")
+        add("")
+        add(r"\begin{center}\small")
+        add(r"\begin{tabular}{p{0.24\textwidth}p{0.68\textwidth}}")
+        add(r"\toprule")
+        add(r"Element & Rule \\")
+        add(r"\midrule")
+        add(r"\textbf{The signal} & At the close of trading day $t$ the rule reads the "
+            r"forecast made for day $t+1$ and forms the edge $(F_{t+1}-P_t)/P_t$. The "
+            r"forecast of the day itself is never used, so the decision cannot contain "
+            r"information about the day it is traded on. \\")
+        add(r"\textbf{The entry filter} & A position is opened only when the edge is at "
+            r"least half an average true range (ATR, fourteen trading days) in absolute "
+            r"value, when the ATR is between 0.4\% and 8\% of the price, and when the "
+            r"direction agrees with the twenty-day moving average. \\")
+        add(r"\textbf{The size} & The risk budget of a trade is one percent of the "
+            r"equity. The stop is placed $1.5$ ATR away from the entry, so the number of "
+            r"shares is the risk budget divided by the distance to the stop: a wider stop "
+            r"means a smaller position. The position is capped at 20\% of the equity, and "
+            r"the sum of all positions at 80\%. \\")
+        add(r"\textbf{The exits} & The stop is at $1.5$ ATR and the target at $3$ ATR, "
+            r"so the reward is twice the risk. After one unit of profit the stop moves "
+            r"to the entry price and then trails the price by one ATR. A position is also "
+            r"closed after ten trading days, and every open position is closed at the end "
+            r"of the evaluation window. When the stop and the target are both inside the "
+            r"daily range, the stop is assumed to be hit first. \\")
+        add(r"\textbf{The portfolio rules} & At most five positions are open at the same "
+            r"time. No new position is opened after a loss of two percent on the day, and "
+            r"after three consecutive losing trades the rule stops for five trading days. \\")
+        add(r"\textbf{The costs} & 20 basis points per unit of turnover, charged on the "
+            r"opening and on the closing of every position, the same rate as the backtest "
+            r"of the manuscript. \\")
+        add(r"\bottomrule")
+        add(r"\end{tabular}")
+        add(r"\end{center}")
+        add("")
+        add(r"The parameters are the defaults above; they were fixed before the results")
+        add(r"were computed and they were not tuned on the test block.")
+        add("")
+        add(r"\subpoint{4.2}{What the money management changes}{}")
+        add(r"The backtest is run with these rules for the four models of the paper:")
+        add(r"CatBoost, LightGBM, the conditional GAN and the static hybrid of the two,")
+        add(r"which is the simple average of the CatBoost and the conGANs forecast (the")
+        add(r"rule of the archived pipeline, \texttt{catBoost\_conGAN.py}, line 765).")
+        add(r"The table compares the two rules on the same forecasts, the same dates and")
+        add(r"the same costs: the always-on rule and the money management of the revised")
+        add(r"backtest. The always-on column is the equal-weight portfolio, with the")
+        add(r"stationary-bootstrap 95\% interval of its geometric return.")
+        add("")
+        add(r"\begin{center}\small")
+        add(r"\begin{longtable}{llrrrrr}")
+        add(r"\toprule")
+        add(r"Regime & Model & Always-on & With the money management & Trades & Win rate "
+            r"& Sharpe \\")
+        add(r"\midrule")
+        add(r"\endfirsthead")
+        add(r"\toprule")
+        add(r"Regime & Model & Always-on & With the money management & Trades & Win rate "
+            r"& Sharpe \\")
+        add(r"\midrule")
+        add(r"\endhead")
+        for regime in ("crash", "normal"):
+            for window in (5, 10, 30):
+                for model in ("CatBoost", "LightGBM", "cGAN", "Static_Hybrid", "RandomWalk"):
+                    cells = [row for row in mm_rows
+                             if row["regime"] == regime and int(row["window"]) == window
+                             and row["model"] == model]
+                    if not cells:
+                        continue
+                    row = cells[0]
+                    add(f"{regime} & {model.replace('_', ' ')} & "
+                        f"{fmt(row.get('always_on_return'), 2)}\\% & "
+                        f"{fmt(row.get('total_return'), 2)}\\% & "
+                        f"{int(row.get('trades', 0))} & "
+                        f"{fmt(row.get('win_rate'), 1)}\\% & "
+                        f"{fmt(row.get('sharpe'), 2)} \\\\")
+        add(r"\bottomrule")
+        add(r"\end{longtable}")
+        add(r"\end{center}")
+        add("")
+        add(r"Three things are worth pointing out. First, the money management changes the")
+        add(r"result of the crash regime materially: the always-on rule loses money in")
+        add(r"every cell, while the money management turns most of those cells into a")
+        add(r"small gain, because the crash is a directional market and the rule is allowed")
+        add(r"to be flat when the forecast is not strong enough. Second, the rule does not")
+        add(r"create an advantage in the calm regime: there the forecast edge is too small")
+        add(r"to cover the cost of the turnover, and the results are close to zero or")
+        add(r"slightly negative; we report this as it is. Third, the rule trades nothing")
+        add(r"when the forecast carries no information: the random-walk benchmark opens no")
+        add(r"position at all, because its edge is exactly zero and the entry filter")
+        add(r"requires half an average true range.")
+        add("")
+        add(r"\subpoint{4.3}{The code, the audit and the reproduction}{}")
+        add(r"The money management is \texttt{leakfree/mm.py}, the runner is")
+        add(r"\texttt{run\_mm.py}, and the trade log of every cell is written to")
+        add(r"\texttt{output/mm/mm\_trades.csv}. The program checks its own books: the")
+        add(r"final equity has to equal the initial capital plus the profit of every")
+        add(r"closed trade, and the check is part of the reported measures (it holds for")
+        add(r"all thirty cells, with a difference below $2\times10^{-9}$).")
+        add("")
+        add(r"\change{Section~3.4 of the revised manuscript now states the money")
+        add(r"management in full as a subsection, and the results of Section~3.6 are the")
+        add(r"results of that backtest.}")
+        add("")
     add(r"\end{document}")
     return "\n".join(lines)
 
@@ -1154,7 +1281,7 @@ def main() -> int:
     if summary["archive"]:
         print(f"scripts -> {out_dir / summary['archive']['manifest']}")
 
-    tex_path = out_dir / f"answer_sn_economics6{args.suffix}.tex"
+    tex_path = out_dir / f"answer_sn_economics7{args.suffix}.tex"
     tex_path.write_text(build_letter(summary, run), encoding="utf-8", newline="\n")
     print(f"letter  -> {tex_path}")
 

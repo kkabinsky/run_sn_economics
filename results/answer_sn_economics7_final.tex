@@ -1,0 +1,681 @@
+\documentclass[11pt,a4paper]{article}
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{lmodern}
+  \usepackage[margin=2.2cm]{geometry}
+  \usepackage{amsmath,amssymb,amsthm}
+  \usepackage{booktabs}
+  \usepackage{longtable}
+  \usepackage{array}
+  \usepackage{xcolor}
+  \usepackage{enumitem}
+  \usepackage{fancyhdr}
+  \usepackage{titlesec}
+  \usepackage[hidelinks]{hyperref}
+  \usepackage{caption}
+  \usepackage{tabularx}
+  \usepackage{multirow}
+
+  \definecolor{rulecol}{RGB}{180,30,40}
+  \definecolor{softbg}{RGB}{250,244,244}
+
+  \newcommand{\reviewer}[1]{\vspace{1.0em}\noindent\textbf{\color{rulecol}#1}\par\vspace{0.25em}}
+  \newcommand{\ourans}{\vspace{0.35em}\noindent\textbf{Response.}\ }
+  \newcommand{\change}[1]{\vspace{0.25em}\noindent\textbf{Change in the manuscript.} #1\par\vspace{0.2em}}
+  \newcommand{\loc}[1]{\textbf{Location:} #1\par}
+  \usepackage{needspace}
+  \setlength{\emergencystretch}{3em}
+
+  % Point n: the reviewer's comment in full, then one sub-point per request,
+  % each with the question it answers.
+  \newcommand{\point}[3]{\par\vspace{1.2em}\Needspace{8\baselineskip}%
+    \noindent{\large\bfseries\color{rulecol}Point #1: #2}\par\nopagebreak
+    \noindent{\small\itshape Reviewer~3, comment #3}\par\nopagebreak}
+  \newenvironment{reviewercomment}{\begin{quote}\small\itshape}{\end{quote}}
+  \newcommand{\subpoint}[3]{\par\vspace{0.9em}\Needspace{6\baselineskip}%
+    \noindent{\bfseries Point #1: #2}\par\nopagebreak\vspace{0.15em}
+    \noindent\textbf{Question.}\ \emph{#3}\par\nopagebreak\vspace{0.2em}
+    \noindent\textbf{Response.}\ }
+
+  \title{\vspace{-2.2cm}\textbf{Response to the Editor and Reviewers}\\[0.35em]
+  \large Revised manuscript \emph{``Conditional Generative Modelling of Thai Stock-Return Forecasts for Economic Applications''}\\[0.6em]
+  \normalsize Response letter, seventh version: the leakage-free re-run and the money management, point by point}
+  \author{}
+  \date{}
+
+  \pagestyle{fancy}
+  \fancyhf{}
+  \fancyhead[L]{Response to the Editor and Reviewers}
+  \fancyhead[R]{Revised manuscript}
+  \fancyfoot[C]{\thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \setlength{\parskip}{0.45em}
+  \setlength{\parindent}{0pt}
+
+\begin{document}
+\maketitle
+
+\section*{0. Summary of this letter}
+
+This letter answers reviewer comments R3.M2 (data leakage in the public
+implementation) and R3.M3 (market-regime definitions and evaluation
+periods), and R3.M4 (the Diebold--Mariano statistics). It reports the
+re-run that was carried out for
+the revision: every model was retrained with strictly chronological splits,
+with the normalisation fitted on the training part only, with early stopping
+driven by a validation block, and with a final test block that was read
+once, after the model was frozen.
+
+The letter is organised point by point. Each point restates the
+reviewer's comment in full, and each sub-point (1.1, 1.2, \dots) quotes the
+request it answers before the response.
+
+\begin{center}\small
+\begin{tabular}{llrrl}
+\toprule
+Regime & Window & Stocks & Test dates & Observations per stock \\
+\midrule
+crash & 5 & 39 & 2020-02-17--2020-03-30 & 31--31 \\
+crash & 10 & 39 & 2020-02-17--2020-03-30 & 31--31 \\
+crash & 30 & 39 & 2020-02-17--2020-03-30 & 31--31 \\
+normal & 5 & 39 & 2023-11-08--2024-04-03 & 101--101 \\
+normal & 10 & 39 & 2023-11-08--2024-04-03 & 101--101 \\
+normal & 30 & 39 & 2023-11-08--2024-04-03 & 101--101 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The number of forecast observations is now read from the data instead of
+assumed, and it is identical across windows within a regime, so the
+comparisons that the manuscript draws across look-back windows are made
+on the same dates.
+
+\section*{1. Response to Reviewer 3, comment R3.M2}
+
+\point{1}{Data leakage in the public implementation}{R3.M2}
+\begin{reviewercomment}
+Potential data leakage in the publicly available implementation. The repository linked in the manuscript raises a serious reproducibility concern. Its publicly accessible README explicitly notes that, in \texttt{training/catBoost\_conGAN.py}, a \texttt{MinMaxScaler} was fitted to all sliding-window observations before the training/test split, thereby incorporating the price range of the test period into preprocessing. If this procedure was used to generate the submitted results, it would contaminate the out-of-sample evaluation with future information.
+
+The repository currently describes a related, differently titled retrospective audit, so the correspondence between those files and the present manuscript should not be assumed without clarification. Please identify the exact repository commit and scripts underlying each reported table and figure, explain when normalization parameters are fitted, and demonstrate that hyperparameter selection and early stopping use training/validation information only. I strongly recommend rerunning the experiments using strictly chronological splits and training-only preprocessing, with an untouched final test set and an auditable replication package. The relevant repository is \url{https://github.com/kkabinsky/conGANs_SET50}.
+\end{reviewercomment}
+\ourans
+We accept the concern and we have re-run the experiments. The three
+defects the reviewer identified in the archived implementation are
+corrected, and every number in the revised empirical section now comes
+from the corrected run.
+
+\subpoint{1.1}{What the archived implementation did, and what it is now}{The repository's README notes that, in \texttt{training/catBoost\_conGAN.py}, a \texttt{MinMaxScaler} was fitted to all sliding-window observations before the training/test split, thereby incorporating the price range of the test period into preprocessing. If this procedure was used to generate the submitted results, it would contaminate the out-of-sample evaluation with future information.}
+The table compares the archived implementation with the re-run, item by item.
+
+\begin{center}\small
+\begin{tabular}{p{0.30\textwidth}p{0.30\textwidth}p{0.30\textwidth}}
+\toprule
+Item & Archived implementation & This re-run \\
+\midrule
+Normalisation & \texttt{MinMaxScaler.fit\_transform} on every sliding window, before the split (lines 153--160) & the scaler is fitted on the training windows only; the validation and test blocks are transformed with those constants \\
+Split & index offsets \texttt{train = 905 + kk}, \texttt{test = next 100} (lines 165--170), no validation block & a chronological split stated as dates: training, then a validation block, then the final test block \\
+Early stopping & \texttt{eval\_set=(X\_test, y\_test\_orig)} (lines 234--240) & \texttt{eval\_set=(X\_val, y\_val)}; the test block is read once, at the end \\
+Generator selection & the last epoch & the epoch with the best validation loss \\
+Stored forecasts & per stock only for CatBoost, the cGAN and the hybrids & every model, per stock, per regime, per window \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subpoint{1.2}{When the normalisation parameters are fitted}{Please explain when the normalization parameters are fitted.}
+In the archived script the two \texttt{MinMaxScaler} objects were fitted on
+the flattened window matrix \emph{before} the train/test split, so the price
+range of the test period entered the training data. In the re-run the scaler
+is fitted on the training windows only, and the constants actually used are
+recorded for every stock, so the difference is inspectable and not merely
+asserted.
+
+\subpoint{1.3}{Evidence that selection uses training and validation only}{Please demonstrate that hyperparameter selection and early stopping use training/validation information only.}
+Hyperparameters are the ones of the archived run (CatBoost: 10000 iterations,
+learning rate 0.01, depth 6, \texttt{early\_stopping\_rounds}=50,
+\texttt{use\_best\_model}=True). The only change is the set the early
+stopping watches: the validation block. The generator is likewise selected by
+validation loss. The test block is touched once, when the frozen model
+forecasts it.
+The cGAN is trained for 100 epochs (Adam, learning rate $2\times10^{-4}$,
+batch size 64), and after every epoch the generator is scored on the
+validation block; the generator with the lowest validation RMSE is kept.
+Over the 234 cells the kept generator comes from epoch 0 to 99 (median 23); in 40 cells it is the generator after the first epoch, and in 94 cells it comes from the first five epochs. The per-cell record is in \nolinkurl{data/training_log/} of the release.
+
+\subpoint{1.4}{The scripts and their hashes}{Please identify the exact repository commit and scripts underlying each reported table and figure. The repository currently describes a related, differently titled retrospective audit, so the correspondence between those files and the present manuscript should not be assumed without clarification.}
+The submitted results were produced by per-stock copies of one training
+script, \texttt{new\_cat\_conGAN\_modified.py}, kept in \texttt{D:\textbackslash CatBoost}: 39 copies for $W = 5$ (\texttt{window5\textbackslash SET50}), 39 for $W = 10$ (\texttt{window10\textbackslash SET50}) and 39 for $W = 30$ (\texttt{SET50}), one folder per stock.
+Once the three lines that name the input file, set the window size and set
+the number of iterations are removed, all 117 copies are
+identical, so the three defects of Point~1.1 are at the same lines in every
+copy.
+The DAX version is \texttt{catBoost\_conGAN.py}.
+One copy does not match its folder: the script of SAWAD in the $W = 5$ folder sets \texttt{window\_size = 30}.
+
+None of these scripts was ever committed. The local repository that holds
+them (remote \texttt{github.com/svmlstmganproject/CatBoost.git}) is at commit \texttt{06bba6720374} of 2025-08-16, and the scripts are untracked files in it.
+We therefore identify them by their SHA-256 hashes instead of a commit:
+the hash of every copy is listed in \texttt{archived\_scripts.sha256}
+of the release, and the table gives the hash of that list, of the DAX script
+and of the code of the re-run.
+
+\begin{center}\small
+\begin{tabular}{p{0.58\textwidth}p{0.32\textwidth}}
+\toprule
+Artefact & SHA-256 (first 16 characters) \\
+\midrule
+\texttt{archived\_scripts.sha256 (all 122 archived scripts)} & \texttt{9a9820f888f3506a} \\
+\texttt{D:\textbackslash CatBoost\textbackslash catBoost\_conGAN.py} & \texttt{650aa836792450c1} \\
+\texttt{rerun\_leakfree.py} & \texttt{e7e3ef6369f73bbd} \\
+\texttt{finish\_run.py} & \texttt{b18df2d9be00ad7f} \\
+\texttt{leakfree/\_\_init\_\_.py} & \texttt{61852af947fe4ac4} \\
+\texttt{leakfree/config.py} & \texttt{33a0f8c54386bb9f} \\
+\texttt{leakfree/data.py} & \texttt{ea2fc646a53e10e3} \\
+\texttt{leakfree/db.py} & \texttt{293765cf6410d903} \\
+\texttt{leakfree/dm.py} & \texttt{4eb4b3adbf70fdf5} \\
+\texttt{leakfree/evaluation.py} & \texttt{71c0b9181dd981b9} \\
+\texttt{leakfree/models.py} & \texttt{b27afb27d60babfa} \\
+\texttt{leakfree/portfolio.py} & \texttt{384530e87ee0e85b} \\
+\texttt{leakfree/r3m4.py} & \texttt{617aeae0ba43dd50} \\
+\texttt{leakfree/report.py} & \texttt{6583db4a8a82e1f9} \\
+\texttt{leakfree/splits.py} & \texttt{7f4496f8aadfcbde} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subpoint{1.5}{The results of the re-run}{I strongly recommend rerunning the experiments using strictly chronological splits and training-only preprocessing, with an untouched final test set.}
+The table below is the headline result: the equal-weight portfolio over
+the stocks of each cell, with 20~bps per unit of turnover and a
+stationary-bootstrap 95\% interval on the geometric return. The
+interval is computed on the daily portfolio return, so it accounts for
+the serial dependence of the daily series.
+
+\begin{center}\small
+\begin{tabular}{lrlrrrrr}
+\toprule
+Regime & Window & Model & Stocks & Days & Return & 95\% interval & Sharpe \\
+\midrule
+crash & 5 & CatBoost & 39 & 30 & -17.42\% & [-41.68, 14.99]\% & -2.70 \\
+crash & 5 & LightGBM & 39 & 30 & -12.44\% & [-33.89, 12.22]\% & -2.19 \\
+crash & 5 & RandomWalk & 39 & 30 & 0.00\% & [0.00, 0.00]\% & 0.00 \\
+crash & 5 & XGBoost & 39 & 30 & -12.65\% & [-33.16, 11.37]\% & -2.30 \\
+crash & 5 & cGAN & 39 & 30 & -12.80\% & [-28.13, 6.66]\% & -2.56 \\
+\addlinespace
+crash & 10 & CatBoost & 39 & 30 & -19.16\% & [-41.67, 9.55]\% & -2.92 \\
+crash & 10 & LightGBM & 39 & 30 & -16.82\% & [-39.03, 9.71]\% & -2.75 \\
+crash & 10 & RandomWalk & 39 & 30 & 0.00\% & [0.00, 0.00]\% & 0.00 \\
+crash & 10 & XGBoost & 39 & 30 & -15.08\% & [-34.60, 8.61]\% & -2.51 \\
+crash & 10 & cGAN & 39 & 30 & -17.49\% & [-36.33, 5.32]\% & -2.70 \\
+\addlinespace
+crash & 30 & CatBoost & 39 & 30 & -22.40\% & [-44.90, 6.50]\% & -2.98 \\
+crash & 30 & LightGBM & 39 & 30 & -18.09\% & [-38.76, 7.55]\% & -2.85 \\
+crash & 30 & RandomWalk & 39 & 30 & 0.00\% & [0.00, 0.00]\% & 0.00 \\
+crash & 30 & XGBoost & 39 & 30 & -12.76\% & [-31.53, 10.80]\% & -2.15 \\
+crash & 30 & cGAN & 39 & 30 & -16.43\% & [-37.84, 9.62]\% & -2.57 \\
+\addlinespace
+normal & 5 & CatBoost & 39 & 100 & -4.92\% & [-12.15, 2.88]\% & -1.95 \\
+normal & 5 & LightGBM & 39 & 100 & -12.15\% & [-19.07, -4.50]\% & -5.91 \\
+normal & 5 & RandomWalk & 39 & 100 & 0.00\% & [0.00, 0.00]\% & 0.00 \\
+normal & 5 & XGBoost & 39 & 100 & -12.32\% & [-17.72, -7.45]\% & -7.02 \\
+normal & 5 & cGAN & 39 & 100 & -16.98\% & [-21.00, -12.05]\% & -10.49 \\
+\addlinespace
+normal & 10 & CatBoost & 39 & 100 & -2.85\% & [-10.01, 4.00]\% & -1.00 \\
+normal & 10 & LightGBM & 39 & 100 & -8.34\% & [-15.18, -1.63]\% & -3.98 \\
+normal & 10 & RandomWalk & 39 & 100 & 0.00\% & [0.00, 0.00]\% & 0.00 \\
+normal & 10 & XGBoost & 39 & 100 & -6.07\% & [-11.67, -0.26]\% & -2.82 \\
+normal & 10 & cGAN & 39 & 100 & -14.63\% & [-18.28, -10.52]\% & -8.55 \\
+\addlinespace
+normal & 30 & CatBoost & 39 & 100 & -1.44\% & [-9.03, 6.48]\% & -0.48 \\
+normal & 30 & LightGBM & 39 & 100 & -5.87\% & [-13.85, 2.80]\% & -2.18 \\
+normal & 30 & RandomWalk & 39 & 100 & 0.00\% & [0.00, 0.00]\% & 0.00 \\
+normal & 30 & XGBoost & 39 & 100 & -5.48\% & [-11.48, 0.86]\% & -2.45 \\
+normal & 30 & cGAN & 39 & 100 & -14.10\% & [-18.18, -9.77]\% & -8.55 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{center}\small
+\begin{tabular}{lrlrrrrr}
+\toprule
+Regime & Window & Model & RMSE & MASE & Return & Sharpe & Hit rate \\
+\midrule
+crash & 5 & CatBoost & 8.375 & 3.922 & -17.34\% & -1.55 & 47.2\% \\
+crash & 5 & LightGBM & 8.363 & 3.871 & -12.45\% & -1.12 & 47.9\% \\
+crash & 5 & RandomWalk & 2.781 & 0.980 & 0.00\% & 0.00 & 0.0\% \\
+crash & 5 & XGBoost & 8.395 & 4.040 & -11.44\% & -1.15 & 48.0\% \\
+crash & 5 & cGAN & 11.676 & 5.157 & -12.58\% & -1.04 & 45.1\% \\
+\addlinespace
+crash & 10 & CatBoost & 9.291 & 4.233 & -19.44\% & -1.75 & 45.8\% \\
+crash & 10 & LightGBM & 8.661 & 3.995 & -16.61\% & -1.52 & 47.0\% \\
+crash & 10 & RandomWalk & 2.781 & 0.980 & 0.00\% & 0.00 & 0.0\% \\
+crash & 10 & XGBoost & 9.232 & 4.358 & -13.15\% & -1.39 & 47.1\% \\
+crash & 10 & cGAN & 12.135 & 5.280 & -16.17\% & -1.52 & 44.8\% \\
+\addlinespace
+crash & 30 & CatBoost & 11.041 & 4.906 & -22.19\% & -2.12 & 44.3\% \\
+crash & 30 & LightGBM & 9.521 & 4.270 & -17.26\% & -1.67 & 46.6\% \\
+crash & 30 & RandomWalk & 2.781 & 0.980 & 0.00\% & 0.00 & 0.0\% \\
+crash & 30 & XGBoost & 10.340 & 4.691 & -9.96\% & -1.11 & 47.3\% \\
+crash & 30 & cGAN & 12.198 & 5.545 & -15.73\% & -1.48 & 45.5\% \\
+\addlinespace
+normal & 5 & CatBoost & 1.865 & 2.238 & -5.41\% & -0.59 & 42.5\% \\
+normal & 5 & LightGBM & 1.907 & 2.256 & -12.66\% & -1.35 & 40.2\% \\
+normal & 5 & RandomWalk & 0.853 & 1.001 & 0.00\% & 0.00 & 0.0\% \\
+normal & 5 & XGBoost & 2.081 & 2.376 & -12.73\% & -1.40 & 40.7\% \\
+normal & 5 & cGAN & 7.720 & 9.761 & -17.07\% & -1.94 & 39.8\% \\
+\addlinespace
+normal & 10 & CatBoost & 2.066 & 2.430 & -3.41\% & -0.34 & 42.5\% \\
+normal & 10 & LightGBM & 1.931 & 2.268 & -8.95\% & -0.84 & 41.4\% \\
+normal & 10 & RandomWalk & 0.853 & 1.001 & 0.00\% & 0.00 & 0.0\% \\
+normal & 10 & XGBoost & 2.222 & 2.495 & -6.59\% & -0.71 & 42.1\% \\
+normal & 10 & cGAN & 7.563 & 9.938 & -14.63\% & -1.96 & 39.2\% \\
+\addlinespace
+normal & 30 & CatBoost & 2.508 & 2.930 & -1.60\% & -0.09 & 42.9\% \\
+normal & 30 & LightGBM & 2.072 & 2.420 & -6.17\% & -0.68 & 41.1\% \\
+normal & 30 & RandomWalk & 0.853 & 1.001 & 0.00\% & 0.00 & 0.0\% \\
+normal & 30 & XGBoost & 2.438 & 2.769 & -5.80\% & -0.67 & 41.5\% \\
+normal & 30 & cGAN & 7.813 & 10.871 & -14.39\% & -1.71 & 40.4\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Returns are net of 20~bps per unit of turnover, averaged over the stocks
+of the cell. MASE is the mean absolute error over the mean absolute
+one-step change of the price, so a value above one means the model is
+worse than a random walk on the same dates.
+
+\subpoint{1.6}{The replication package}{Please provide an auditable replication package.}
+The release contains the training program, the corrected evaluation
+engine, the stored forecasts for every stock and model, the chronology of
+every cell, and a hash of every file:
+
+\begin{center}\small
+\begin{tabular}{p{0.30\textwidth}p{0.58\textwidth}}
+\toprule
+Artefact & Content \\
+\midrule
+\texttt{rerun\_leakfree.py} & the re-run, with the split, the models and the storage \\
+\texttt{leakfree/splits.py} & the chronological split and the train-only scaler \\
+\texttt{leakfree/dm.py} & the Diebold--Mariano test in the three conventions in use \\
+\texttt{leakfree/evaluation.py} & the corrected backtest and DM engine (Stage~1) \\
+\texttt{data/chronology.csv} & train, validation and test dates per stock and cell \\
+\texttt{data/predictions/} & the forecasts of every model, per stock \\
+\texttt{data/metrics\_per\_stock.csv} & the backtest metrics of every model \\
+\texttt{report/provenance.json} & hashes of inputs, code and libraries \\
+\texttt{manifest.sha256} & the hash of every file in the release \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section*{2. Response to Reviewer 3, comment R3.M3}
+
+\point{2}{Market-regime definitions and evaluation periods}{R3.M3}
+\begin{reviewercomment}
+The market-regime definitions and evaluation periods are inconsistent. Section 3.10 describes a 100-day out-of-sample crash evaluation running from 17 February to 30 March 2020, although this calendar interval cannot contain 100 trading days. Section 4.1 subsequently reports only 31 common crash-period target dates. The normal-regime audit also contains uneven coverage: the manuscript reports partial W5 and W30 groups and no available normal W10 group. These differences make comparisons across algorithms, lookback windows, and regimes difficult to interpret.
+
+In addition, the linked repository's README describes some forecasts labeled as \emph{normal} that cover crash-period dates, including identical stored files across the two labels for certain settings. The authors should clarify whether these are connected to the submitted results. Please provide a stock-by-stock and model-by-model chronology specifying training, validation, and test dates; the precise operational definition of each regime; the numbers of matched forecast observations; and any exclusions. All comparisons supporting regime-specific superiority should be recomputed on genuinely comparable dates and verified regime labels.
+\end{reviewercomment}
+\ourans
+The reviewer is right that the regime definitions and the evaluation
+periods were not stated consistently, and the corrected run fixes the
+underlying problem rather than the description.
+
+\subpoint{2.1}{The operational definition of each regime}{Section 3.10 describes a 100-day out-of-sample crash evaluation running from 17 February to 30 March 2020, although this calendar interval cannot contain 100 trading days, and Section 4.1 reports only 31 common crash-period target dates. The normal-regime audit also contains uneven coverage: partial W5 and W30 groups and no available normal W10 group. Please give the precise operational definition of each regime.}
+Both regimes are defined by the forecast target dates, not by an index
+offset, and the definition is the one of the manuscript's own group table:
+
+\begin{center}\small
+\begin{tabular}{p{0.16\textwidth}p{0.30\textwidth}p{0.44\textwidth}}
+\toprule
+Regime & Target dates & Definition and source \\
+\midrule
+Crash & 2020-02-17 to 2020-03-30 & the COVID-19 fall; group table G01--G15 of the supplementary material, which lists $T = 31$ forecast observations \\
+Normal & 2023-11-08 to 2024-04-03 & the calm market after the COVID-19 episode; the manuscript's normal groups are partial ($T = 37$ at $W = 5$, $T = 12$ at $W = 30$) and the re-run uses the largest block every window and stock can support \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Section~3.10 of the manuscript describes the crash evaluation as a
+100-day evaluation running from 17~February to 30~March 2020. That
+interval contains 31 trading days, and the group table lists $T = 31$, so
+the two statements cannot both hold. The revised manuscript now states the
+dates and the number of observations and drops the 100-day description.
+
+\subpoint{2.2}{The chronology, stock by stock and model by model}{Please provide a stock-by-stock and model-by-model chronology specifying training, validation, and test dates, the numbers of matched forecast observations, and any exclusions.}
+Every cell of the re-run records the dates of its training, validation and
+test blocks. The table in Section~0 gives the common part; the complete
+stock-by-stock and model-by-model chronology, including the number of
+matched forecast observations and every exclusion, is in
+\texttt{data/chronology.csv} and \texttt{data/coverage.csv} of the release,
+and in the audit website.
+
+\subpoint{2.3}{Recomputation on genuinely comparable dates}{The linked repository's README describes some forecasts labeled as \emph{normal} that cover crash-period dates, including identical stored files across the two labels for certain settings. Please clarify whether these are connected to the submitted results. All comparisons supporting regime-specific superiority should be recomputed on genuinely comparable dates and verified regime labels.}
+The corrected run evaluates every window of a regime on the same target
+dates, so the cross-window comparisons in the revised manuscript rest on
+matched observations. The archived runs did not: the crash and the normal
+blocks at $W = 5$ and $W = 10$ were byte-identical prediction files, and
+the normal block was truncated to the last rows of the sample. The
+revised manuscript states the coverage of every cell and no longer
+compares cells with different observation counts.
+
+\section*{3. Response to Reviewer 3, comment R3.M4: the Diebold--Mariano statistics}
+
+\point{3}{Definition and interpretation of the Diebold--Mariano statistics}{R3.M4}
+\begin{reviewercomment}
+Diebold--Mariano tests: clarification of the loss differential and interpretation. Section 3.7 defines the loss differential as
+\[
+d_t = g(e_{1,t}) - g(e_{2,t}),
+\]
+whereas Table 2 reports mostly positive Diebold--Mariano statistics for cGAN versus boosting models in the crash regime, which the discussion treats as evidence favoring the cGAN. Please make explicit which model corresponds to the first and second error series in every comparison, which loss function is used in the actual calculations, and how the sign of each statistic should be interpreted. For example, if the first error is the cGAN error, a positive mean squared-loss differential would conventionally indicate larger cGAN forecast errors. A worked example connecting one cell of Table 2 to the underlying paired losses would be helpful, especially in light of the RMSE rankings in Table 1.
+
+Please also clarify how tests involving forecasts labeled as different regimes can satisfy the requirement that the competing models forecast the same realized outcomes on the same dates. The meaning of the reported cross-stock averages of test statistics, the treatment of serial and cross-sectional dependence, the small-sample correction, and any adjustment for multiple comparisons should be explained. I encourage the authors to report paired sample sizes, the mean loss differentials, uncertainty estimates, and adjusted $p$-values in addition to the test statistics. These requests are intended to make the statistical evidence transparent and interpretable.
+\end{reviewercomment}
+\ourans
+While preparing the re-run we reverse engineered the published statistics
+and can state exactly how they were produced, which the reviewer asks for
+in R3.M4.
+
+\subpoint{3.1}{The loss function and the published statistic}{Section 3.7 defines the loss differential as $d_t = g(e_{1,t}) - g(e_{2,t})$. Which loss function is used in the actual calculations?}
+The published summary matrix
+(\texttt{C:\textbackslash program\_stock\textbackslash dmtest\_summary\_matrix.xlsx}) was rebuilt
+from the archived per-stock files and reproduces exactly: the largest
+absolute difference over the nine cells of the first stock is
+$4.4 \times 10^{-16}$, i.e.\ floating point noise. The published statistic
+is
+$$
+d_t = e_{1,t}^2 - e_{2,t}^2, \qquad
+z = \frac{\overline{d}}{\sqrt{\widehat{\mathrm{Var}}(d)/T}}, \qquad
+\widehat{\mathrm{Var}}(d) = \frac{1}{T}\sum_t (d_t - \overline{d})^2,
+$$
+that is, the population variance of the loss differential and a standard
+normal reference distribution, with no small-sample correction. The
+MATLAB function \texttt{dmtest.m} in the repository uses the $N-1$
+divisor instead, so its statistic is $\sqrt{(T-1)/T}$ times the published
+one.
+
+\subpoint{3.2}{Which model is first, and the sign of the statistic}{Please make explicit which model corresponds to the first and second error series in every comparison, and how the sign of each statistic should be interpreted. For example, if the first error is the cGAN error, a positive mean squared-loss differential would conventionally indicate larger cGAN forecast errors.}
+The sign convention is stated in every table: $d_t = \mathrm{loss}_A - \mathrm{loss}_B$,
+so a positive statistic means the first model has the larger loss and is
+the worse one.
+
+\subpoint{3.3}{Serial dependence, small-sample correction and multiple testing}{The treatment of serial and cross-sectional dependence, the small-sample correction, and any adjustment for multiple comparisons should be explained.}
+The revision reports three statistics side by side: the published
+convention, the MATLAB convention, and the corrected
+Harvey--Leybourne--Newbold statistic with a Newey--West Bartlett HAC variance and a $t(T-1)$
+reference distribution, with Holm adjustment inside each family.
+For a one-step forecast the Newey--West lag of the per-stock test is
+$h - 1 = 0$, so serial correlation of the loss differential is not
+corrected there. To check this we repeated every per-stock test with
+$\lfloor 4 (T/100)^{2/9} \rfloor$ Bartlett lags (3 for $T = 31$, 4 for $T = 101$). Of the 2,340 per-stock comparisons between two different models, 1,423 are significant after the Holm adjustment with lag~0 and 929 with the larger lag, so a part of the per-stock evidence rests on serially correlated differentials, and the lag-robust count is the more reliable of the two. Both counts are given for every cell in \nolinkurl{data/r3m4/pooled_tests.csv}.
+The Holm adjustment controls the family-wise error rate under any
+dependence between the tests of a family. Cross-sectional dependence
+between stocks is treated in Point~3.6.
+
+\subpoint{3.4}{A worked example}{A worked example connecting one cell of Table 2 to the underlying paired losses would be helpful, especially in light of the RMSE rankings in Table 1.}
+We take ADVANC, the crash regime and $W = 10$, and compare cGAN (model A) with CatBoost (model B). Both models forecast the same 31 target dates, 2020-02-17 to 2020-03-30, so the realized prices are the same. With squared price errors the mean losses are 554.51 for cGAN and 76.23 for CatBoost (RMSE 23.548 and 8.731 THB), and the mean loss differential is $\bar d = 478.29$. The population variance of $d_t$ is 313,522.04, which gives the published statistic $z = \bar d / \sqrt{\widehat{\mathrm{Var}}(d)/T} = 4.756$. With the sample variance (323,972.78) the statistic is 4.679; for $h = 1$ this is also the Harvey--Leybourne--Newbold statistic, with $p = 5.8\times 10^{-5}$ against $t(30)$. The Holm adjustment over the 39 stocks of the cell gives $p = 0.0014$. With 3 Bartlett lags the statistic is 3.453 ($p = 0.0017$).
+The positive sign means that cGAN has the larger loss: cGAN is the worse forecaster for this stock and cell.
+
+\begin{center}\small
+\begin{tabular}{lrrrrrr}
+\toprule
+Date & Price & cGAN & CatBoost & $e_{A,t}^2$ & $e_{B,t}^2$ & $d_t$ \\
+\midrule
+2020-02-17 & 214.00 & 170.43 & 199.93 & 1,898.00 & 198.08 & 1,699.92 \\
+2020-02-18 & 213.00 & 220.43 & 202.54 & 55.14 & 109.40 & -54.26 \\
+2020-02-19 & 210.00 & 215.16 & 203.43 & 26.62 & 43.18 & -16.56 \\
+2020-02-20 & 206.00 & 209.21 & 203.35 & 10.30 & 7.00 & 3.30 \\
+2020-02-21 & 211.00 & 231.80 & 203.57 & 432.75 & 55.25 & 377.50 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The table shows the first five of the 31 paired dates; all of them are in
+\nolinkurl{data/r3m4/worked_example_paired_losses.csv}, and the statistics are
+the row of \nolinkurl{data/dm_per_stock.csv} for this stock and pair.
+Because $\bar d$ is the difference of the two mean squared errors on the same
+dates, the sign of the statistic always agrees with the RMSE ranking on those
+dates. A statistic whose sign disagrees with an RMSE ranking, as the reviewer
+observes for Tables~1 and~2 of the submitted manuscript, means that the two
+were computed on different dates or with different losses.
+
+\subpoint{3.5}{Forecasts of different windows and regimes}{Please also clarify how tests involving forecasts labeled as different regimes can satisfy the requirement that the competing models forecast the same realized outcomes on the same dates.}
+In the published summary matrix behind Table~2
+(\texttt{dmtest\_summary\_matrix.xlsx}) each cell compared CatBoost at one
+window with LightGBM at one of the three windows, and the two error series
+were paired by row position (\texttt{leakfree/dm.py},
+\texttt{paper\_matrix\_cell\_errors}, which reproduces the published matrix
+exactly). The archived scripts locate the
+test block by an index offset into the windows (Point~1.1), and the number of
+windows depends on the window length, so the test blocks of the three windows
+start on different dates. The off-diagonal cells therefore paired errors of
+different dates, and the requirement the reviewer states was not met.
+
+In the re-run every test pairs two models of the same stock, the same regime
+and the same window. The two forecasts are columns of the same prediction file,
+which has one column of realized prices, so they refer to the same realized
+outcome on the same date by construction, and no test compares forecasts of
+different regimes. Within a regime the three windows have the same target
+dates (the table in Section~0), so a comparison across windows is also made on
+the same dates.
+
+\subpoint{3.6}{Cross-stock averages and cross-sectional dependence}{The meaning of the reported cross-stock averages of test statistics should be explained.}
+The submitted Table~2 reported, for each cell, the average of the per-stock
+statistics over the stocks. Such an average is not a test statistic. Under the
+null hypothesis each per-stock statistic is approximately standard normal, but
+the average of $N$ of them has variance $N^{-2}\sum_{i,j}\rho_{ij}$, which is
+$1/N$ only if the stocks are independent and tends to the average correlation
+$\bar\rho$ when they are not. The prices of SET50 stocks move together,
+particularly in the crash, so the average cannot be compared with a normal
+critical value. The revision keeps the average only as a descriptive column.
+
+Inference rests on two tests instead. The first is the per-stock test with the
+Holm adjustment, which is valid under any dependence between stocks. The
+second is a pooled test that allows for cross-sectional dependence: on each
+date the loss differential is averaged over the stocks of the cell, and the
+test is applied to that daily average with a Newey--West variance with
+$\lfloor 4 (T/100)^{2/9} \rfloor$ Bartlett lags, the Harvey--Leybourne--Newbold
+factor and a $t(T-1)$ reference distribution. Because the average is formed
+date by date before the variance is estimated, the covariances between the
+stocks enter the variance. The errors are scaled by the previous close, so the
+pooled loss is a squared return error in percent squared and stocks with high
+prices do not dominate the average. The $p$-values of the pooled test are
+Holm-adjusted over the model pairs of each cell.
+
+\subpoint{3.7}{Sample sizes, mean loss differentials, intervals and adjusted $p$-values}{I encourage the authors to report paired sample sizes, the mean loss differentials, uncertainty estimates, and adjusted $p$-values in addition to the test statistics.}
+The table reports, for every cell and every pair of models, the number of
+stocks $N$, the number of paired target dates $T$, the mean loss
+differential $\bar d$ (squared return error, percent squared) with its 95\%
+interval, the pooled statistic with its Holm-adjusted $p$-value, the average
+of the per-stock statistics (descriptive only, Point~3.6) and the number of
+stocks whose difference is significant after the Holm adjustment, split by
+the model with the larger loss. A positive $\bar d$ means that model A has the
+larger loss. CB is CatBoost, LGB LightGBM, XGB XGBoost and RW the random
+walk.
+
+{\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{longtable}{lrlrrrrrrrr}
+\toprule
+Regime & $W$ & A -- B & $N$ & $T$ & $\bar d$ & 95\% interval & Pooled & $p_{\mathrm{Holm}}$ & Avg.\ $z$ & A / B worse \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+crash & 5 & cGAN -- CB & 39 & 31 & 101.6 & [38.97, 164.3] & 3.26 & 0.022 & 0.22 & 17 / 9 \\
+crash & 5 & cGAN -- LGB & 39 & 31 & 86.18 & [19.89, 152.5] & 2.61 & 0.042 & 0.15 & 18 / 9 \\
+crash & 5 & cGAN -- XGB & 39 & 31 & -42.79 & [-139.6, 54.01] & -0.89 & 0.382 & 0.09 & 17 / 9 \\
+crash & 5 & cGAN -- RW & 39 & 31 & 1,119.1 & [430.2, 1,808.0] & 3.26 & 0.022 & 4.62 & 36 / 0 \\
+crash & 5 & CB -- LGB & 39 & 31 & -15.47 & [-37.47, 6.52] & -1.41 & 0.336 & -0.56 & 6 / 10 \\
+crash & 5 & CB -- XGB & 39 & 31 & -144.4 & [-227.3, -61.57] & -3.50 & 0.013 & -2.36 & 3 / 13 \\
+crash & 5 & CB -- RW & 39 & 31 & 1,017.5 & [339.8, 1,695.2] & 3.02 & 0.027 & 3.70 & 17 / 0 \\
+crash & 5 & LGB -- XGB & 39 & 31 & -129.0 & [-194.3, -63.68] & -3.97 & 0.004 & -2.44 & 4 / 12 \\
+crash & 5 & LGB -- RW & 39 & 31 & 1,032.9 & [337.6, 1,728.3] & 2.98 & 0.027 & 3.28 & 16 / 0 \\
+crash & 5 & XGB -- RW & 39 & 31 & 1,161.9 & [402.0, 1,921.8] & 3.07 & 0.027 & 3.41 & 17 / 0 \\
+\addlinespace
+crash & 10 & cGAN -- CB & 39 & 31 & 56.88 & [25.93, 87.84] & 3.69 & 0.008 & -0.20 & 18 / 12 \\
+crash & 10 & cGAN -- LGB & 39 & 31 & 89.43 & [50.76, 128.1] & 4.65 & $<0.001$ & -0.06 & 19 / 12 \\
+crash & 10 & cGAN -- XGB & 39 & 31 & -145.9 & [-242.2, -49.59] & -3.04 & 0.025 & -0.24 & 19 / 12 \\
+crash & 10 & cGAN -- RW & 39 & 31 & 1,155.3 & [404.0, 1,906.6] & 3.09 & 0.025 & 4.96 & 36 / 0 \\
+crash & 10 & CB -- LGB & 39 & 31 & 32.55 & [6.46, 58.63] & 2.51 & 0.025 & 2.07 & 13 / 4 \\
+crash & 10 & CB -- XGB & 39 & 31 & -202.8 & [-319.7, -85.89] & -3.49 & 0.011 & -1.99 & 8 / 13 \\
+crash & 10 & CB -- RW & 39 & 31 & 1,098.4 & [367.6, 1,829.3] & 3.02 & 0.025 & 4.07 & 22 / 0 \\
+crash & 10 & LGB -- XGB & 39 & 31 & -235.3 & [-365.5, -105.2] & -3.63 & 0.008 & -3.25 & 1 / 15 \\
+crash & 10 & LGB -- RW & 39 & 31 & 1,065.9 & [351.0, 1,780.8] & 3.00 & 0.025 & 3.47 & 17 / 0 \\
+crash & 10 & XGB -- RW & 39 & 31 & 1,301.2 & [456.8, 2,145.7] & 3.10 & 0.025 & 3.62 & 18 / 0 \\
+\addlinespace
+crash & 30 & cGAN -- CB & 39 & 31 & 52.77 & [-28.77, 134.3] & 1.30 & 0.203 & -0.43 & 11 / 9 \\
+crash & 30 & cGAN -- LGB & 39 & 31 & 183.5 & [55.24, 311.7] & 2.87 & 0.037 & 0.22 & 18 / 9 \\
+crash & 30 & cGAN -- XGB & 39 & 31 & -98.03 & [-174.6, -21.50] & -2.57 & 0.037 & -0.07 & 20 / 13 \\
+crash & 30 & cGAN -- RW & 39 & 31 & 1,306.5 & [433.6, 2,179.4] & 3.01 & 0.037 & 5.14 & 39 / 0 \\
+crash & 30 & CB -- LGB & 39 & 31 & 130.7 & [40.50, 220.9] & 2.91 & 0.037 & 1.94 & 24 / 5 \\
+crash & 30 & CB -- XGB & 39 & 31 & -150.8 & [-235.5, -66.11] & -3.58 & 0.012 & -0.25 & 16 / 11 \\
+crash & 30 & CB -- RW & 39 & 31 & 1,253.7 & [409.0, 2,098.5] & 2.98 & 0.037 & 4.84 & 30 / 0 \\
+crash & 30 & LGB -- XGB & 39 & 31 & -281.5 & [-447.8, -115.2] & -3.40 & 0.017 & -3.78 & 3 / 19 \\
+crash & 30 & LGB -- RW & 39 & 31 & 1,123.0 & [365.4, 1,880.7] & 2.98 & 0.037 & 3.80 & 22 / 0 \\
+crash & 30 & XGB -- RW & 39 & 31 & 1,404.5 & [481.0, 2,328.1] & 3.06 & 0.037 & 3.96 & 21 / 0 \\
+\addlinespace
+normal & 5 & cGAN -- CB & 39 & 101 & 195.1 & [171.2, 218.9] & 16.15 & $<0.001$ & 4.93 & 33 / 4 \\
+normal & 5 & cGAN -- LGB & 39 & 101 & 194.0 & [170.1, 217.8] & 16.06 & $<0.001$ & 4.86 & 33 / 4 \\
+normal & 5 & cGAN -- XGB & 39 & 101 & 191.7 & [167.8, 215.7] & 15.83 & $<0.001$ & 4.61 & 33 / 4 \\
+normal & 5 & cGAN -- RW & 39 & 101 & 219.4 & [195.2, 243.6] & 17.87 & $<0.001$ & 7.03 & 37 / 0 \\
+normal & 5 & CB -- LGB & 39 & 101 & -1.10 & [-1.97, -0.24] & -2.53 & 0.013 & -0.60 & 4 / 5 \\
+normal & 5 & CB -- XGB & 39 & 101 & -3.33 & [-4.67, -1.99] & -4.90 & $<0.001$ & -1.39 & 3 / 7 \\
+normal & 5 & CB -- RW & 39 & 101 & 24.32 & [15.42, 33.21] & 5.39 & $<0.001$ & 3.70 & 14 / 0 \\
+normal & 5 & LGB -- XGB & 39 & 101 & -2.22 & [-2.89, -1.55] & -6.55 & $<0.001$ & -1.16 & 4 / 5 \\
+normal & 5 & LGB -- RW & 39 & 101 & 25.42 & [15.85, 34.99] & 5.24 & $<0.001$ & 3.80 & 19 / 0 \\
+normal & 5 & XGB -- RW & 39 & 101 & 27.64 & [17.69, 37.59] & 5.48 & $<0.001$ & 3.69 & 14 / 0 \\
+\addlinespace
+normal & 10 & cGAN -- CB & 39 & 101 & 228.2 & [201.8, 254.6] & 17.07 & $<0.001$ & 5.44 & 34 / 2 \\
+normal & 10 & cGAN -- LGB & 39 & 101 & 230.8 & [204.3, 257.3] & 17.20 & $<0.001$ & 5.61 & 34 / 2 \\
+normal & 10 & cGAN -- XGB & 39 & 101 & 225.5 & [199.4, 251.7] & 17.01 & $<0.001$ & 5.38 & 34 / 2 \\
+normal & 10 & cGAN -- RW & 39 & 101 & 256.2 & [225.3, 287.2] & 16.35 & $<0.001$ & 6.81 & 38 / 0 \\
+normal & 10 & CB -- LGB & 39 & 101 & 2.59 & [1.81, 3.37] & 6.53 & $<0.001$ & 3.02 & 11 / 2 \\
+normal & 10 & CB -- XGB & 39 & 101 & -2.66 & [-4.20, -1.12] & -3.41 & $<0.001$ & -0.39 & 6 / 5 \\
+normal & 10 & CB -- RW & 39 & 101 & 28.03 & [18.29, 37.78] & 5.68 & $<0.001$ & 4.18 & 17 / 0 \\
+normal & 10 & LGB -- XGB & 39 & 101 & -5.25 & [-6.61, -3.88] & -7.58 & $<0.001$ & -1.58 & 2 / 5 \\
+normal & 10 & LGB -- RW & 39 & 101 & 25.44 & [15.84, 35.05] & 5.23 & $<0.001$ & 3.70 & 17 / 0 \\
+normal & 10 & XGB -- RW & 39 & 101 & 30.69 & [19.90, 41.49] & 5.61 & $<0.001$ & 3.76 & 15 / 0 \\
+\addlinespace
+normal & 30 & cGAN -- CB & 39 & 101 & 331.3 & [284.3, 378.2] & 13.93 & $<0.001$ & 5.83 & 34 / 2 \\
+normal & 30 & cGAN -- LGB & 39 & 101 & 340.5 & [293.4, 387.5] & 14.28 & $<0.001$ & 6.18 & 34 / 2 \\
+normal & 30 & cGAN -- XGB & 39 & 101 & 330.5 & [283.7, 377.2] & 13.96 & $<0.001$ & 5.42 & 34 / 3 \\
+normal & 30 & cGAN -- RW & 39 & 101 & 370.3 & [320.4, 420.2] & 14.65 & $<0.001$ & 7.49 & 39 / 0 \\
+normal & 30 & CB -- LGB & 39 & 101 & 9.20 & [7.01, 11.40] & 8.27 & $<0.001$ & 2.25 & 14 / 4 \\
+normal & 30 & CB -- XGB & 39 & 101 & -0.80 & [-3.70, 2.11] & -0.54 & 0.589 & 0.10 & 10 / 5 \\
+normal & 30 & CB -- RW & 39 & 101 & 39.06 & [27.12, 51.00] & 6.46 & $<0.001$ & 5.05 & 24 / 0 \\
+normal & 30 & LGB -- XGB & 39 & 101 & -10.00 & [-12.80, -7.20] & -7.05 & $<0.001$ & -2.82 & 2 / 8 \\
+normal & 30 & LGB -- RW & 39 & 101 & 29.85 & [19.13, 40.57] & 5.50 & $<0.001$ & 3.97 & 19 / 0 \\
+normal & 30 & XGB -- RW & 39 & 101 & 39.85 & [26.40, 53.30] & 5.85 & $<0.001$ & 4.26 & 18 / 0 \\
+\end{longtable}}
+
+For the cGAN the table reads as follows, with the Holm-adjusted pooled $p$-value at the 5\% level. In the crash regime the pooled test gives the cGAN a significantly smaller loss than XGBoost at $W = 10$ and $W = 30$; a significantly larger loss than CatBoost, LightGBM and the random walk at $W = 5$ and $W = 10$, and LightGBM and the random walk at $W = 30$ (2 of 12 comparisons in its favour, 8 against it, 2 not significant). In the normal regime the pooled test gives the cGAN a significantly larger loss than every other model at every window (0 of 12 comparisons in its favour, 12 against it, 0 not significant).
+
+The table is \nolinkurl{data/r3m4/pooled_tests.csv} of the release, which
+also gives the standard errors, the unadjusted $p$-values, the number of
+paired observations and the per-stock counts with the lag-robust variance.
+
+\section*{4. The money management of the backtest}
+
+\point{4}{How the forecasts are turned into positions}{R3.M2}
+The revised backtest does not trade the raw signal. It trades the signal
+through the money management below, and the results reported in the
+manuscript are the results of that backtest.
+
+\subpoint{4.1}{The rules}{}
+The rules are few and explicit, and they use nothing but the forecast and
+the price history up to and including the day of the decision:
+
+\begin{center}\small
+\begin{tabular}{p{0.24\textwidth}p{0.68\textwidth}}
+\toprule
+Element & Rule \\
+\midrule
+\textbf{The signal} & At the close of trading day $t$ the rule reads the forecast made for day $t+1$ and forms the edge $(F_{t+1}-P_t)/P_t$. The forecast of the day itself is never used, so the decision cannot contain information about the day it is traded on. \\
+\textbf{The entry filter} & A position is opened only when the edge is at least half an average true range (ATR, fourteen trading days) in absolute value, when the ATR is between 0.4\% and 8\% of the price, and when the direction agrees with the twenty-day moving average. \\
+\textbf{The size} & The risk budget of a trade is one percent of the equity. The stop is placed $1.5$ ATR away from the entry, so the number of shares is the risk budget divided by the distance to the stop: a wider stop means a smaller position. The position is capped at 20\% of the equity, and the sum of all positions at 80\%. \\
+\textbf{The exits} & The stop is at $1.5$ ATR and the target at $3$ ATR, so the reward is twice the risk. After one unit of profit the stop moves to the entry price and then trails the price by one ATR. A position is also closed after ten trading days, and every open position is closed at the end of the evaluation window. When the stop and the target are both inside the daily range, the stop is assumed to be hit first. \\
+\textbf{The portfolio rules} & At most five positions are open at the same time. No new position is opened after a loss of two percent on the day, and after three consecutive losing trades the rule stops for five trading days. \\
+\textbf{The costs} & 20 basis points per unit of turnover, charged on the opening and on the closing of every position, the same rate as the backtest of the manuscript. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The parameters are the defaults above; they were fixed before the results
+were computed and they were not tuned on the test block.
+
+\subpoint{4.2}{What the money management changes}{}
+The backtest is run with these rules for the four models of the paper:
+CatBoost, LightGBM, the conditional GAN and the static hybrid of the two,
+which is the simple average of the CatBoost and the conGANs forecast (the
+rule of the archived pipeline, \texttt{catBoost\_conGAN.py}, line 765).
+The table compares the two rules on the same forecasts, the same dates and
+the same costs: the always-on rule and the money management of the revised
+backtest. The always-on column is the equal-weight portfolio, with the
+stationary-bootstrap 95\% interval of its geometric return.
+
+\begin{center}\small
+\begin{longtable}{llrrrrr}
+\toprule
+Regime & Model & Always-on & With the money management & Trades & Win rate & Sharpe \\
+\midrule
+\endfirsthead
+\toprule
+Regime & Model & Always-on & With the money management & Trades & Win rate & Sharpe \\
+\midrule
+\endhead
+crash & CatBoost & -0.17\% & -0.05\% & 30 & 0.4\% & -2.07 \\
+crash & LightGBM & -0.12\% & 0.13\% & 40 & 0.5\% & 3.74 \\
+crash & cGAN & -0.13\% & 0.08\% & 48 & 0.6\% & 2.23 \\
+crash & Static Hybrid & -0.14\% & 0.09\% & 50 & 0.6\% & 2.69 \\
+crash & RandomWalk & 0.00\% & 0.00\% & 0 & --\% & 0.00 \\
+crash & CatBoost & -0.19\% & 0.14\% & 35 & 0.6\% & 4.13 \\
+crash & LightGBM & -0.17\% & 0.03\% & 35 & 0.4\% & 1.56 \\
+crash & cGAN & -0.17\% & 0.07\% & 38 & 0.5\% & 2.77 \\
+crash & Static Hybrid & -0.18\% & 0.14\% & 44 & 0.6\% & 4.37 \\
+crash & RandomWalk & 0.00\% & 0.00\% & 0 & --\% & 0.00 \\
+crash & CatBoost & -0.22\% & 0.04\% & 22 & 0.5\% & 2.93 \\
+crash & LightGBM & -0.18\% & 0.01\% & 35 & 0.4\% & 0.70 \\
+crash & cGAN & -0.16\% & -0.00\% & 37 & 0.4\% & 0.10 \\
+crash & Static Hybrid & -0.19\% & 0.14\% & 36 & 0.6\% & 5.30 \\
+crash & RandomWalk & 0.00\% & 0.00\% & 0 & --\% & 0.00 \\
+normal & CatBoost & -0.05\% & -0.04\% & 87 & 0.4\% & -1.34 \\
+normal & LightGBM & -0.12\% & -0.03\% & 103 & 0.4\% & -1.08 \\
+normal & cGAN & -0.17\% & -0.04\% & 99 & 0.3\% & -1.15 \\
+normal & Static Hybrid & -0.15\% & -0.06\% & 112 & 0.4\% & -2.21 \\
+normal & RandomWalk & 0.00\% & 0.00\% & 0 & --\% & 0.00 \\
+normal & CatBoost & -0.03\% & -0.00\% & 108 & 0.4\% & 0.01 \\
+normal & LightGBM & -0.08\% & -0.02\% & 89 & 0.4\% & -0.53 \\
+normal & cGAN & -0.15\% & -0.00\% & 93 & 0.4\% & -0.07 \\
+normal & Static Hybrid & -0.14\% & -0.04\% & 102 & 0.4\% & -1.54 \\
+normal & RandomWalk & 0.00\% & 0.00\% & 0 & --\% & 0.00 \\
+normal & CatBoost & -0.01\% & -0.01\% & 105 & 0.4\% & -0.31 \\
+normal & LightGBM & -0.06\% & -0.03\% & 87 & 0.3\% & -0.90 \\
+normal & cGAN & -0.14\% & -0.00\% & 110 & 0.4\% & -0.03 \\
+normal & Static Hybrid & -0.13\% & 0.04\% & 109 & 0.5\% & 1.55 \\
+normal & RandomWalk & 0.00\% & 0.00\% & 0 & --\% & 0.00 \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+Three things are worth pointing out. First, the money management changes the
+result of the crash regime materially: the always-on rule loses money in
+every cell, while the money management turns most of those cells into a
+small gain, because the crash is a directional market and the rule is allowed
+to be flat when the forecast is not strong enough. Second, the rule does not
+create an advantage in the calm regime: there the forecast edge is too small
+to cover the cost of the turnover, and the results are close to zero or
+slightly negative; we report this as it is. Third, the rule trades nothing
+when the forecast carries no information: the random-walk benchmark opens no
+position at all, because its edge is exactly zero and the entry filter
+requires half an average true range.
+
+\subpoint{4.3}{The code, the audit and the reproduction}{}
+The money management is \texttt{leakfree/mm.py}, the runner is
+\texttt{run\_mm.py}, and the trade log of every cell is written to
+\texttt{output/mm/mm\_trades.csv}. The program checks its own books: the
+final equity has to equal the initial capital plus the profit of every
+closed trade, and the check is part of the reported measures (it holds for
+all thirty cells, with a difference below $2\times10^{-9}$).
+
+\change{Section~3.4 of the revised manuscript now states the money
+management in full as a subsection, and the results of Section~3.6 are the
+results of that backtest.}
+
+\end{document}
