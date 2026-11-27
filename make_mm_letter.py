@@ -104,11 +104,38 @@ def number(value, digits=2):
     return f"{float(value):,.{digits}f}"
 
 
+def market_direction(root=None) -> dict:
+    """How far the stocks moved in each regime, and how many moved the same way."""
+    import leakfree.config as leak_config
+    import leakfree.data as leak_data
+    prices = leak_data.load_all(root=Path(root) if root else leak_config.LEGACY_DATA_ROOT)
+    windows = {"crash": ("2020-02-17", "2020-03-30"),
+               "normal": ("2023-11-08", "2024-04-03")}
+    out = {}
+    for regime, (start, end) in windows.items():
+        moves = []
+        for ticker, series in prices.items():
+            dates = pd.to_datetime(series.dates)
+            close = pd.Series(series.close, index=dates)
+            inside = close.loc[start:end]
+            if len(inside) < 5:
+                continue
+            moves.append(float(inside.iloc[-1] / inside.iloc[0] - 1.0))
+        if moves:
+            out[regime] = {"mean": sum(moves) / len(moves),
+                           "up": sum(1 for move in moves if move > 0),
+                           "down": sum(1 for move in moves if move <= 0),
+                           "n": len(moves)}
+    return out
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--run", required=True)
     parser.add_argument("--out", default=None)
+    parser.add_argument("--data-root", default=None,
+                        help="where the price workbooks are")
     parser.add_argument("--suffix", default="")
     parser.add_argument("--pdf", action="store_true")
     args = parser.parse_args()
@@ -122,6 +149,7 @@ def main() -> int:
     rules = json.loads((mm_dir / "rules.json").read_text(encoding="utf-8")) \
         if (mm_dir / "rules.json").is_file() else {}
 
+    market = market_direction(args.data_root)
     out_dir = Path(args.out) if args.out else PROJECT
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -216,7 +244,13 @@ def main() -> int:
     add(r"enough.")
     add("")
     add(r"Second, the rule does not create an advantage in the calm regime, and the")
-    add(r"reason is a cost, not a signal, effect. The winning trades of the calm regime")
+    add(r"reason is a cost, not a signal, effect. The two windows of the revision")
+    add(r"differ in the behaviour of the market itself: in the crash window of 17")
+    add(r"February to 30 March 2020 the 39 stocks fell by")
+    add(f"{abs(market['crash']['mean']) * 100:.1f} per cent on average and not one of")
+    add(r"them rose, while in the calm window of 8 November 2023 to 3 April 2024")
+    add(f"{market['normal']['up']} of them rose and {market['normal']['down']} fell.")
+    add(r"The winning trades of the calm regime")
     add(r"moved further than the losing ones, but not far enough: the directional edge")
     add(r"of a trade is about seven basis points against a cost of about forty basis")
     add(r"points for the round trip, that is a sixth of the cost. The same computation in")
