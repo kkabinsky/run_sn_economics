@@ -337,6 +337,35 @@ def summarise(run: dict) -> dict:
     else:
         summary["mm"] = []
         summary["mm_rules"] = {}
+    # why the calm regime does not improve: the directional edge of a trade
+    # against the cost of a round trip
+    trades_path = Path(summary["run_dir"]) / "mm" / "mm_trades.csv"
+    if trades_path.is_file():
+        trades = pd.read_csv(trades_path)
+        trades["move_bps"] = ((trades["exit_price"] - trades["entry_price"]).abs()
+                              / trades["entry_price"] * 1e4)
+        trades["cost_bps"] = (trades["cost"]
+                              / (trades["shares"] * trades["entry_price"]) * 1e4)
+        diagnostic = {}
+        for regime, part in trades.groupby("regime"):
+            wins = part[part["pnl"] > 0]["move_bps"]
+            losses = part[part["pnl"] <= 0]["move_bps"]
+            win_rate = len(wins) / len(part) if len(part) else 0.0
+            edge = (win_rate * float(wins.median() if len(wins) else 0.0)
+                    - (1 - win_rate) * float(losses.median() if len(losses) else 0.0))
+            diagnostic[regime] = {
+                "trades": int(len(part)),
+                "win_rate": win_rate,
+                "win_move_bps": float(wins.median()) if len(wins) else 0.0,
+                "loss_move_bps": float(losses.median()) if len(losses) else 0.0,
+                "cost_bps": float(part["cost_bps"].mean()),
+                "edge_bps": edge,
+                "coverage": edge / float(part["cost_bps"].mean())
+                if float(part["cost_bps"].mean()) else 0.0,
+            }
+        summary["mm_diagnostic"] = diagnostic
+    else:
+        summary["mm_diagnostic"] = {}
 
     return summary
 
@@ -1128,7 +1157,9 @@ def build_letter(summary: dict, run: dict) -> str:
         add("")
         add(r"\subpoint{4.1}{The rules}{}")
         add(r"The rules are few and explicit, and they use nothing but the forecast and")
-        add(r"the price history up to and including the day of the decision:")
+        add(r"the price history up to and including the day of the decision. The")
+        add(r"parameters are the defaults listed below; they were fixed before the")
+        add(r"results were computed and they were not tuned on the test block.")
         add("")
         add(r"\begin{center}\small")
         add(r"\begin{tabular}{p{0.24\textwidth}p{0.68\textwidth}}")
@@ -1163,9 +1194,6 @@ def build_letter(summary: dict, run: dict) -> str:
         add(r"\bottomrule")
         add(r"\end{tabular}")
         add(r"\end{center}")
-        add("")
-        add(r"The parameters are the defaults above; they were fixed before the results")
-        add(r"were computed and they were not tuned on the test block.")
         add("")
         add(r"\subpoint{4.2}{What the money management changes}{}")
         add(r"The backtest is run with these rules for the four models of the paper:")
@@ -1213,12 +1241,29 @@ def build_letter(summary: dict, run: dict) -> str:
         add(r"every cell, while the money management turns most of those cells into a")
         add(r"small gain, because the crash is a directional market and the rule is allowed")
         add(r"to be flat when the forecast is not strong enough. Second, the rule does not")
-        add(r"create an advantage in the calm regime: there the forecast edge is too small")
-        add(r"to cover the cost of the turnover, and the results are close to zero or")
-        add(r"slightly negative; we report this as it is. Third, the rule trades nothing")
-        add(r"when the forecast carries no information: the random-walk benchmark opens no")
-        add(r"position at all, because its edge is exactly zero and the entry filter")
-        add(r"requires half an average true range.")
+        add(r"create an advantage in the calm regime, and the reason is a cost, not a")
+        add(r"signal, effect.")
+        diagnostic = summary.get("mm_diagnostic") or {}
+        calm = diagnostic.get("normal")
+        crash = diagnostic.get("crash")
+        if calm and crash:
+            add(f"In the calm regime the rule opened {calm['trades']:,} trades and won")
+            add(f"{calm['win_rate'] * 100:.1f}\% of them. The winning trades moved")
+            add(f"{calm['win_move_bps']:.0f} basis points and the losing ones")
+            add(f"{calm['loss_move_bps']:.0f} basis points, so the directional edge of a")
+            add(f"trade is {calm['edge_bps']:.0f} basis points, against a cost of about")
+            add(f"{calm['cost_bps']:.0f} basis points for the round trip: the edge covers")
+            add(f"only {calm['coverage']:.2f} of the cost. In the crash regime the same")
+            add(f"computation gives an edge of {crash['edge_bps']:.0f} basis points against")
+            add(f"the same cost, that is {crash['coverage']:.1f} times the cost, which is")
+            add(r"why the rule works there and not in the calm regime. The forecast of the")
+            add(r"models simply does not separate the two outcomes enough in the calm")
+            add(r"regime to pay for the turnover, which is the same conclusion that the")
+            add(r"Diebold--Mariano tests of Point~3 reach for those cells. We report this")
+            add(r"as it is.")
+        add(r"Third, the rule trades nothing when the forecast carries no information: the")
+        add(r"random-walk benchmark opens no position at all, because its edge is exactly")
+        add(r"zero and the entry filter requires half an average true range.")
         add("")
         add(r"\subpoint{4.3}{The code, the audit and the reproduction}{}")
         add(r"The money management is \texttt{leakfree/mm.py}, the runner is")

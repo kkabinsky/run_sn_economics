@@ -580,7 +580,9 @@ manuscript are the results of that backtest.
 
 \subpoint{4.1}{The rules}{}
 The rules are few and explicit, and they use nothing but the forecast and
-the price history up to and including the day of the decision:
+the price history up to and including the day of the decision. The
+parameters are the defaults listed below; they were fixed before the
+results were computed and they were not tuned on the test block.
 
 \begin{center}\small
 \begin{tabular}{p{0.24\textwidth}p{0.68\textwidth}}
@@ -596,9 +598,6 @@ Element & Rule \\
 \bottomrule
 \end{tabular}
 \end{center}
-
-The parameters are the defaults above; they were fixed before the results
-were computed and they were not tuned on the test block.
 
 \subpoint{4.2}{What the money management changes}{}
 The backtest is run with these rules for the four models of the paper:
@@ -659,12 +658,25 @@ result of the crash regime materially: the always-on rule loses money in
 every cell, while the money management turns most of those cells into a
 small gain, because the crash is a directional market and the rule is allowed
 to be flat when the forecast is not strong enough. Second, the rule does not
-create an advantage in the calm regime: there the forecast edge is too small
-to cover the cost of the turnover, and the results are close to zero or
-slightly negative; we report this as it is. Third, the rule trades nothing
-when the forecast carries no information: the random-walk benchmark opens no
-position at all, because its edge is exactly zero and the entry filter
-requires half an average true range.
+create an advantage in the calm regime, and the reason is a cost, not a
+signal, effect.
+In the calm regime the rule opened 1,204 trades and won
+39.5\% of them. The winning trades moved
+221 basis points and the losing ones
+134 basis points, so the directional edge of a
+trade is 7 basis points, against a cost of about
+40 basis points for the round trip: the edge covers
+only 0.17 of the cost. In the crash regime the same
+computation gives an edge of 129 basis points against
+the same cost, that is 3.3 times the cost, which is
+why the rule works there and not in the calm regime. The forecast of the
+models simply does not separate the two outcomes enough in the calm
+regime to pay for the turnover, which is the same conclusion that the
+Diebold--Mariano tests of Point~3 reach for those cells. We report this
+as it is.
+Third, the rule trades nothing when the forecast carries no information: the
+random-walk benchmark opens no position at all, because its edge is exactly
+zero and the entry filter requires half an average true range.
 
 \subpoint{4.3}{The code, the audit and the reproduction}{}
 The money management is \texttt{leakfree/mm.py}, the runner is
