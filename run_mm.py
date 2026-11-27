@@ -23,7 +23,7 @@ sys.path.insert(0, str(PROJECT))
 from leakfree import config as cfg                      # noqa: E402
 from leakfree import data as data_mod                  # noqa: E402
 from leakfree.mm import SniperRules, run_sniper_mm     # noqa: E402
-from leakfree.portfolio import portfolio_from_predictions   # noqa: E402
+from leakfree.portfolio import portfolio_frame_from_predictions   # noqa: E402
 
 
 def load_forecasts(run_dir: Path) -> dict:
@@ -72,6 +72,28 @@ def add_hybrids(forecasts: dict) -> dict:
             if hybrid:
                 models["Static_Hybrid"] = hybrid
     return forecasts
+
+
+def prediction_frames(run_dir: Path, forecasts: dict) -> dict:
+    """The stored forecasts per cell, in the form the portfolio uses.
+
+    The static hybrid is not stored in the run, it is built from the CatBoost
+    and the conGANs forecast, so it is added here as a column of the same
+    frame and gets its always-on baseline from the same engine.
+    """
+    frames: dict = {}
+    directory = run_dir / "data" / "predictions"
+    for path in sorted(directory.glob("*.csv")):
+        parts = path.stem.split("_")
+        if len(parts) < 3:
+            continue
+        ticker, regime, window = parts[0], parts[1], int(parts[2].lstrip("W"))
+        frame = pd.read_csv(path)
+        if "CatBoost" in frame.columns and "cGAN" in frame.columns:
+            frame = frame.copy()
+            frame["Static_Hybrid"] = 0.5 * frame["CatBoost"] + 0.5 * frame["cGAN"]
+        frames[(ticker, regime, window)] = frame
+    return frames
 
 
 def main() -> int:
@@ -145,8 +167,10 @@ def main() -> int:
     if trades_all:
         pd.concat(trades_all, ignore_index=True).to_csv(out_dir / "mm_trades.csv", index=False)
 
-    # the always-on signal of the backtest, for the same cells
-    baseline = portfolio_from_predictions(run_dir, cost_bps=int(args.cost_bps))
+    # the always-on signal of the backtest, for the same cells, including the
+    # static hybrid, which is not stored in the run
+    baseline = portfolio_frame_from_predictions(prediction_frames(run_dir, forecasts),
+                                                cost_bps=int(args.cost_bps))
     if len(baseline):
         baseline.to_csv(out_dir / "baseline_portfolio.csv", index=False)
         merged = summary.merge(
