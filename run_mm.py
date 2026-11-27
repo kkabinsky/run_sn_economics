@@ -45,6 +45,35 @@ def load_forecasts(run_dir: Path) -> dict:
     return out
 
 
+def add_hybrids(forecasts: dict) -> dict:
+    """The static hybrid of the paper: 0.5 * CatBoost + 0.5 * conGANs.
+
+    The archived pipeline builds it as the simple average of the two forecasts
+    (catBoost_conGAN.py, line 765).  Both forecasts live in the same space, so
+    the average can be taken from the stored forecasts without training again.
+    """
+    for regime, windows in forecasts.items():
+        for window, models in windows.items():
+            catboost = models.get("CatBoost")
+            gan = models.get("cGAN")
+            if not catboost or not gan:
+                continue
+            hybrid = {}
+            for ticker in set(catboost) & set(gan):
+                first = catboost[ticker]
+                second = gan[ticker]
+                common = first.index.intersection(second.index)
+                if len(common) == 0:
+                    continue
+                hybrid[ticker] = pd.Series(
+                    (0.5 * first.loc[common].to_numpy()
+                     + 0.5 * second.loc[common].to_numpy()),
+                    index=common)
+            if hybrid:
+                models["Static_Hybrid"] = hybrid
+    return forecasts
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -73,7 +102,7 @@ def main() -> int:
     prices = data_mod.load_all(root=root)
     print(f"  {len(prices)} price series")
 
-    forecasts = load_forecasts(run_dir)
+    forecasts = add_hybrids(load_forecasts(run_dir))
     rules = SniperRules(risk_per_trade=args.risk, stop_atr=args.stop_atr,
                          target_atr=args.target_atr, max_positions=args.max_positions,
                          edge_atr=args.edge_atr, cost_bps=args.cost_bps)

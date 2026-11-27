@@ -144,10 +144,11 @@ def main() -> int:
     add("")
     add(r"We agree that this is not enough for a replication, and that a backtest of a")
     add(r"forecast model should say what it does with the money. The revision therefore")
-    add(r"adds an explicit money-management layer to the re-run, and reports the results")
-    add(r"of both rules side by side.")
+    add(r"states the money management of the backtest in full: the revised backtest does")
+    add(r"not trade the raw signal, it trades the signal through the money management")
+    add(r"described below, and the reported results are the results of that backtest.")
     add("")
-    add(r"\section*{2. The money management of the re-run}")
+    add(r"\section*{2. The money management of the backtest}")
     add("")
     add(r"\begin{center}\small")
     add(r"\begin{tabular}{p{0.24\textwidth}p{0.68\textwidth}}")
@@ -165,25 +166,45 @@ def main() -> int:
     add(r"uses besides the forecast is the price history up to and including the day of")
     add(r"the decision.")
     add("")
+    add(r"The backtest of the revision is run with these rules for the four models of")
+    add(r"the paper: CatBoost, LightGBM, the conditional GAN and the static hybrid of")
+    add(r"the two, which is the simple average of the CatBoost and the conGANs forecast")
+    add(r"(the rule of the archived pipeline, \texttt{catBoost\_conGAN.py}, line 765).")
+    add(r"")
     add(r"\section*{3. What the money management changes}")
     add("")
     add(r"The table compares the two rules on the same forecasts, the same dates and")
     add(r"the same costs: the always-on rule of the manuscript and the money management")
-    add(r"above. The always-on column is the equal-weight portfolio of the corrected")
-    add(r"re-run, with the stationary-bootstrap 95\% interval of its geometric return.")
+    add(r"of the revised backtest. The always-on column is the equal-weight portfolio of")
+    add(r"the corrected re-run, with the stationary-bootstrap 95\% interval of its")
+    add(r"geometric return.")
     add("")
     add(r"\begin{center}\small")
-    add(r"\begin{tabular}{llrrrrr}")
+    add(r"\begin{longtable}{llrrrrr}")
     add(r"\toprule")
     add(r"Regime & Model & Always-on & With the money management & Trades & Win rate & Sharpe \\")
     add(r"\midrule")
-    for _, row in comparison.iterrows():
-        add(f"{row['regime']} & {row['model']} & "
-            f"{pct(row['always_on_return'])}\\% & {pct(row['total_return'])}\\% & "
-            f"{int(row['trades'])} & {pct(row['win_rate'], 1)}\\% & "
-            f"{number(row['sharpe'])} \\\\")
+    add(r"\endfirsthead")
+    add(r"\toprule")
+    add(r"Regime & Model & Always-on & With the money management & Trades & Win rate & Sharpe \\")
+    add(r"\midrule")
+    add(r"\endhead")
+    models = ["CatBoost", "LightGBM", "cGAN", "Static_Hybrid", "RandomWalk"]
+    for regime in ("crash", "normal"):
+        for window in (5, 10, 30):
+            for model in models:
+                rows = comparison[(comparison["regime"] == regime)
+                                  & (comparison["window"] == window)
+                                  & (comparison["model"] == model)]
+                if rows.empty:
+                    continue
+                row = rows.iloc[0]
+                add(f"{regime} & {model.replace('_', ' ')} & "
+                    f"{pct(row['always_on_return'])}\\% & {pct(row['total_return'])}\\% & "
+                    f"{int(row['trades'])} & {pct(row['win_rate'], 1)}\\% & "
+                    f"{number(row['sharpe'])} \\\\")
     add(r"\bottomrule")
-    add(r"\end{tabular}")
+    add(r"\end{longtable}")
     add(r"\end{center}")
     add("")
     add(r"Three things are worth pointing out.")
