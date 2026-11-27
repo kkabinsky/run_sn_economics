@@ -1,0 +1,622 @@
+{
+  "created_utc": "2026-11-26T09:40:55+00:00",
+  "run_config": {
+    "tickers": [
+      "ADVANC",
+      "AOT",
+      "BANPU",
+      "BEM",
+      "BBL",
+      "BDMS",
+      "BH",
+      "BTS",
+      "CBG",
+      "CENTEL",
+      "COM7",
+      "CPALL",
+      "CPF",
+      "CPN",
+      "DELTA",
+      "EA",
+      "EGCO",
+      "GLOBAL",
+      "GPSC",
+      "HMPRO",
+      "INTUCH",
+      "IVL",
+      "KBANK",
+      "KTC",
+      "KTB",
+      "LH",
+      "MTC",
+      "MINT",
+      "PTTGC",
+      "PTT",
+      "PTTEP",
+      "RATCH",
+      "SAWAD",
+      "SCC",
+      "TISCO",
+      "TTB",
+      "TOP",
+      "TU",
+      "WHA"
+    ],
+    "regimes": [
+      "crash",
+      "normal"
+    ],
+    "windows": [
+      5,
+      10,
+      30
+    ],
+    "models": [
+      "CatBoost",
+      "LightGBM",
+      "RandomWalk",
+      "XGBoost",
+      "cGAN"
+    ],
+    "val_days": 50,
+    "regime_mode": "dates",
+    "with_legacy": true,
+    "cost_grid_bps": [
+      0,
+      10,
+      20,
+      40
+    ],
+    "cgan_epochs": [
+      100
+    ],
+    "cgan_batch": 64,
+    "seed": 42,
+    "data_root": "/home/claude/rr/CatBoost/SET50",
+    "note": "CatBoost, LightGBM and XGBoost trained by rerun_leakfree.py; models missing from the stored forecasts added by finish_run.py",
+    "finished_utc": "2026-11-26T09:40:55+00:00",
+    "added_models_training_environment": {
+      "python": "3.13.18",
+      "platform": "Linux-6.18.44-fc-v880-x86_64-with-glibc2.39",
+      "numpy": "2.5.3",
+      "pandas": "3.0.5",
+      "scipy": "1.18.1",
+      "sklearn": "1.9.1",
+      "catboost": "1.2.10",
+      "lightgbm": "4.7.0",
+      "xgboost": "3.4.1",
+      "torch": "2.15.0+cu132",
+      "torch_cuda": false
+    }
+  },
+  "versions": {
+    "python": "3.13.18",
+    "platform": "Linux-6.18.44-fc-v880-x86_64-with-glibc2.39",
+    "numpy": "2.5.3",
+    "pandas": "3.0.5",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "catboost": "1.2.10",
+    "lightgbm": "4.7.0",
+    "xgboost": "3.4.1",
+    "torch": "2.15.0+cu132",
+    "torch_cuda": false
+  },
+  "seed": 42,
+  "code": {
+    "package_root": "/home/claude/rr/proj",
+    "files": [
+      {
+        "path": "/home/claude/rr/proj/leakfree/__init__.py",
+        "sha256": "61852af947fe4ac4c37e10a9229153232ecd448e0feba59fcef42e018ae8682f"
+      },
+      {
+        "path": "/home/claude/rr/proj/leakfree/config.py",
+        "sha256": "33a0f8c54386bb9fdb7b5b5cb97df8647d3aec581b22da8bf9bc5655a503c987"
+      },
+      {
+        "path": "/home/claude/rr/proj/leakfree/data.py",
+        "sha256": "ea2fc646a53e10e3589492b7e9ed63d2d97d6551730de47440dcf657226a5752"
+      },
+      {
+        "path": "/home/claude/rr/proj/leakfree/db.py",
+        "sha256": "293765cf6410d9033a8e5bb520dd9c0be851cca58f15a4a05b98fd39cf44629d"
+      },
+      {
+        "path": "/home/claude/rr/proj/leakfree/dm.py",
+        "sha256": "4eb4b3adbf70fdf5cb8d77e134408efb31e3d4e5b27111e6433f500c42a71c19"
+      },
+      {
+        "path": "/home/claude/rr/proj/leakfree/evaluation.py",
+        "sha256": "71c0b9181dd981b9c0e063e4346bf7c1dc0bcc62726ff925a498e6d31142a641"
+      },
+      {
+        "path": "/home/claude/rr/proj/leakfree/models.py",
+        "sha256": "b27afb27d60babfad0d49badf45ce10810b3c207b790a92be84707ca32f43682"
+      },
+      {
+        "path": "/home/claude/rr/proj/leakfree/portfolio.py",
+        "sha256": "384530e87ee0e85b112f9f69d4a50109db3ca6112a89845f05da4f0aad8c8749"
+      },
+      {
+        "path": "/home/claude/rr/proj/leakfree/r3m4.py",
+        "sha256": "617aeae0ba43dd5028fe5ea7834c92c1a8575b2dedce8c490d071ff6a87a6ab5"
+      },
+      {
+        "path": "/home/claude/rr/proj/leakfree/report.py",
+        "sha256": "6583db4a8a82e1f9ba01338565a137719afd489eeac1df6e430efad0d5038b58"
+      },
+      {
+        "path": "/home/claude/rr/proj/leakfree/splits.py",
+        "sha256": "7f4496f8aadfcbde0ab1af44a4ce4d05e2b791aafe2288c43d306fe399485399"
+      }
+    ],
+    "entry_point_sha256": "e7e3ef6369f73bbd94e5dee63d6157699d09db2495b46b796220c04881385926",
+    "scripts": [
+      {
+        "path": "/home/claude/rr/proj/rerun_leakfree.py",
+        "sha256": "e7e3ef6369f73bbd94e5dee63d6157699d09db2495b46b796220c04881385926"
+      },
+      {
+        "path": "/home/claude/rr/proj/finish_run.py",
+        "sha256": "b18df2d9be00ad7f12dbe8c27b75de87f1cf34357b1e0c7a6888acb679934798"
+      }
+    ]
+  },
+  "evaluation_engine": {
+    "origin": "D:\\run_revised_conGANs\\revised_core.py",
+    "origin_sha256": "missing",
+    "copy": "/home/claude/rr/proj/leakfree/evaluation.py",
+    "copy_sha256": "71c0b9181dd981b9c0e063e4346bf7c1dc0bcc62726ff925a498e6d31142a641"
+  },
+  "archived_training_script": {
+    "path": "D:\\CatBoost/new_cat_conGAN_modified.py",
+    "sha256": "missing",
+    "leakage_lines": {
+      "scaler_fitted_on_all_windows": "lines 153-160",
+      "split_without_validation": "lines 165-170",
+      "early_stopping_on_test": "lines 234-240"
+    }
+  },
+  "git_revision_of_archived_code": "not a git repository",
+  "manuscript_sources": {
+    "group_table": "D:\\paper_conGANs\\final_version_catboost\\supplementary_backtest_version3.tex",
+    "response_letter": "D:\\revised_sn_economics\\answer_sn_economics3.tex"
+  },
+  "inputs": [
+    {
+      "ticker": "ADVANC",
+      "path": "input/advanc_final2.xlsx",
+      "sha256": "8eebd8317d5574c27449c436e8158d68720fb02178bfc99b79929e35f8fa4932",
+      "price_column": "closed",
+      "sheet": "closed",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/ADVANC/advanc_final2.xlsx"
+    },
+    {
+      "ticker": "AOT",
+      "path": "input/aot_final2.xlsx",
+      "sha256": "b60f5f80e76eceb8354976ea1c2f0cd3a42cbfcbab27a922592caa761a672ba8",
+      "price_column": "closed",
+      "sheet": "closed",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/AOT/aot_final2.xlsx"
+    },
+    {
+      "ticker": "BANPU",
+      "path": "input/banpu_final2.xlsx",
+      "sha256": "f44cd5eb8ef7e05014a531efddfd3b67fa04a3c31d9cabd4f8f06c7528e0e6cd",
+      "price_column": "closed",
+      "sheet": "closed",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/BANPU/banpu_final2.xlsx"
+    },
+    {
+      "ticker": "BEM",
+      "path": "input/bem_final2.xlsx",
+      "sha256": "eab73794f1d178442d3f30bd98e82ac849a65a460de0b26e344b133b9eab0d46",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/BEM/bem_final2.xlsx"
+    },
+    {
+      "ticker": "BBL",
+      "path": "input/BBL_final2.xlsx",
+      "sha256": "49177f823785d2f6e814b32c48b9be82d5067dfdfcad9baad4411278a642de55",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/BBL/bbl_final2.xlsx"
+    },
+    {
+      "ticker": "BDMS",
+      "path": "input/bdms_final2.xlsx",
+      "sha256": "b84828ffc0f35c6e1b5959f6daefe53e2f438558777cb0de1c04e8ca9b1a6b58",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/BDMS/bdms_final2.xlsx"
+    },
+    {
+      "ticker": "BH",
+      "path": "input/bh_final2.xlsx",
+      "sha256": "06134e3715bcb1f69d0e107f1ca05c788d0ae4458321aa266752c8c9a87af920",
+      "price_column": "closed",
+      "sheet": "Sheet1",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/BH/bh_final2.xlsx"
+    },
+    {
+      "ticker": "BTS",
+      "path": "input/bts_final2.xlsx",
+      "sha256": "4caaca989c1b0fe1f53a80241be056f7501359c4d619c18cbfc2f516f1f0956c",
+      "price_column": "closed",
+      "sheet": "Sheet1",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/BTS/bts_final2.xlsx"
+    },
+    {
+      "ticker": "CBG",
+      "path": "input/cbg_final2.xlsx",
+      "sha256": "bf4512c076f20681c8da0a61d42bc763c60a2ad32a1f50602afc494b32eb12e8",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/CBG/cbg_final2.xlsx"
+    },
+    {
+      "ticker": "CENTEL",
+      "path": "input/centel_final2.xlsx",
+      "sha256": "e49c1a07cecddabc21faee23233e24b30130ed1575f3d78253e97d7899355c27",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/CENTEL/centel_final2.xlsx"
+    },
+    {
+      "ticker": "COM7",
+      "path": "input/com7_final2.xlsx",
+      "sha256": "f54be433284f2b568305951c7b0dae0c4606b63cbfafa363e5fb9b6de8c4aae4",
+      "price_column": "cp",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/com7_final2.xlsx"
+    },
+    {
+      "ticker": "CPALL",
+      "path": "input/cpall_final2.xlsx",
+      "sha256": "8bbe3900773da4831d152004e4fdbd369cf9a300c8607d3d903a2d94256b49bb",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/CPALL/cpall_final2.xlsx"
+    },
+    {
+      "ticker": "CPF",
+      "path": "input/cpf_final2.xlsx",
+      "sha256": "2da336a8e0d607c161e5b50c3118daad7b0eb1c7ba3bbeecfb7d3754986c33f5",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/CPF/cpf_final2.xlsx"
+    },
+    {
+      "ticker": "CPN",
+      "path": "input/cpn_final2.xlsx",
+      "sha256": "854d7ffd782f1cc084a6c801cba8d9b765983d9b2b547282eb8e3e3d2eb4bb68",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/CPN/cpn_final2.xlsx"
+    },
+    {
+      "ticker": "DELTA",
+      "path": "input/delta_final2.xlsx",
+      "sha256": "1efea69aeb1105646b4971e23127d920aa555a536a4e567a4c1a0d8d6a8825e4",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/DELTA/delta_final2.xlsx"
+    },
+    {
+      "ticker": "EA",
+      "path": "input/ea_final2.xlsx",
+      "sha256": "41e3f2da136f420227637357484141dbcd50066a373d9848f407171f67ba4beb",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/EA/ea_final2.xlsx"
+    },
+    {
+      "ticker": "EGCO",
+      "path": "input/egco_final2.xlsx",
+      "sha256": "9489e86212fb5f6ffd0bde478ea6d6b98d0068a597b366133d2529143f5abde1",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/EGCO/egco_final2.xlsx"
+    },
+    {
+      "ticker": "GLOBAL",
+      "path": "input/global_final2.xlsx",
+      "sha256": "daa515e791c8895b48d8d624d43baf08b1024a01d9ee2a5d98cc47636e2d00fa",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/GLOBAL/global_final2.xlsx"
+    },
+    {
+      "ticker": "GPSC",
+      "path": "input/gpsc_final2.xlsx",
+      "sha256": "2971266daa4036cff510d2d79eadc5dab987bd131ff3dd6a3ab696471f1ab8d6",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/GPSC/gpsc_final2.xlsx"
+    },
+    {
+      "ticker": "HMPRO",
+      "path": "input/hmpro_final2.xlsx",
+      "sha256": "824f03cbce625183d8dca9ee30efaf20407ec3dbb5b8879af159e62b36ef71a7",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/HMPRO/hmpro_final2.xlsx"
+    },
+    {
+      "ticker": "INTUCH",
+      "path": "input/intuch_final2.xlsx",
+      "sha256": "ed2a20b19eb3ea0464ad5c442ad2e58edde5875d7e48218640c635acc976bf84",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/INTUCH/intuch_final2.xlsx"
+    },
+    {
+      "ticker": "IVL",
+      "path": "input/ivl_final2.xlsx",
+      "sha256": "42bc2b81dc97d83ae2e3294e9ba4ebd5a190ce800b593c844ed7c6a630c3186d",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/IVL/ivl_final2.xlsx"
+    },
+    {
+      "ticker": "KBANK",
+      "path": "input/kbank_final2.xlsx",
+      "sha256": "cb2e5927782f647b50674bf698334c6dffe508b2cfb26888e2fa50956eeac5fe",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/KBANK/kbank_final2.xlsx"
+    },
+    {
+      "ticker": "KTC",
+      "path": "input/ktc_final2.xlsx",
+      "sha256": "4dee3ae968ef9b24009d0048523ab6dfbaf740e0f4b8b706f42aa4df41342c3f",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/KTC/ktc_final2.xlsx"
+    },
+    {
+      "ticker": "KTB",
+      "path": "input/ktb_final2.xlsx",
+      "sha256": "0bb2cd2468b9ce1a12ccaf7966178879dbbd8b424595dfec9fe7e3475e7f0d3c",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/KTB/ktb_final2.xlsx"
+    },
+    {
+      "ticker": "LH",
+      "path": "input/lh_final2.xlsx",
+      "sha256": "7f0e0f86762126d7db74349025d5716bd43fb158abf0886bfb49cd9563edfb32",
+      "price_column": "closed",
+      "sheet": "Sheet1",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/LH/lh_final2.xlsx"
+    },
+    {
+      "ticker": "MTC",
+      "path": "input/mtc_final2.xlsx",
+      "sha256": "909fc1144efba29ec38bf6888a3f120560bcd0952e4fd48d134db116959acc17",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/MTC/mtc_final2.xlsx"
+    },
+    {
+      "ticker": "MINT",
+      "path": "input/mint_final2.xlsx",
+      "sha256": "b73d04018e0305fecb864d2e1a0c0ce77b183e23416ec7eecadb220beb570fe1",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/MINT/mint_final2.xlsx"
+    },
+    {
+      "ticker": "PTTGC",
+      "path": "input/pttgc_final2.xlsx",
+      "sha256": "eb71cd8d1909288cfa3e8e7dc496419a61f8e524dd68ba6b1694e7b429058316",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/PTTGC/pttgc_final2.xlsx"
+    },
+    {
+      "ticker": "PTT",
+      "path": "input/ptt_final2.xlsx",
+      "sha256": "3c527d48afc29a72abe1ba71e6ce9f79e4226878bf89f0c3e021787444912e92",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/PTT/ptt_final2.xlsx"
+    },
+    {
+      "ticker": "PTTEP",
+      "path": "input/pttep_final2.xlsx",
+      "sha256": "5eb4bd6556e28c62ee3483b773350ea18ebc7657350a5826eead2991efffe124",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/PTTEP/pttep_final2.xlsx"
+    },
+    {
+      "ticker": "RATCH",
+      "path": "input/ratch_final2.xlsx",
+      "sha256": "e6d313897dbb2d67fe7785d058404e9657e43a20778c64b7979bd10043880c5c",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/RATCH/ratch_final2.xlsx"
+    },
+    {
+      "ticker": "SAWAD",
+      "path": "input/sawad_final2.xlsx",
+      "sha256": "466acfbca910697a0d59458ef6eb157ea005d85e688b63ec856a54c3be7d8f22",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/SAWAD/sawad_final2.xlsx"
+    },
+    {
+      "ticker": "SCC",
+      "path": "input/scc_final2.xlsx",
+      "sha256": "f86791c0712bc4b5ed89ae149f71e07392cfb83f389b00d300967c5cb7287656",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/SCC/scc_final2.xlsx"
+    },
+    {
+      "ticker": "TISCO",
+      "path": "input/tisco_final2.xlsx",
+      "sha256": "790fec4cca05e97dad1c82b42a99f54fe9f9f84065019ceb3f4c428216d01866",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/TISCO/tisco_final2.xlsx"
+    },
+    {
+      "ticker": "TTB",
+      "path": "input/ttb_final2.xlsx",
+      "sha256": "118d3e69e1a2625310fca53a12041673a65e6d6468d02c06f5daec0d1f3fe31b",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/TTB/ttb_final2.xlsx"
+    },
+    {
+      "ticker": "TOP",
+      "path": "input/top_final2.xlsx",
+      "sha256": "621ad97df47cb5c0757cdf4f6a83fd2c4d80beed1a4f600cd9e1b90bea300e40",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/TOP/top_final2.xlsx"
+    },
+    {
+      "ticker": "TU",
+      "path": "input/tu_final2.xlsx",
+      "sha256": "1654f8c4bd99210e6bd6d943de68daee96b6d34cf7eff3bf29710feb65fca8c9",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/TU/tu_final2.xlsx"
+    },
+    {
+      "ticker": "WHA",
+      "path": "input/wha_final2.xlsx",
+      "sha256": "ff60a9506538bb4ed10f99060dd1b41209f492557af9a08c2dc76ccb4c4c045e",
+      "price_column": "closed",
+      "sheet": "close",
+      "rows": 1947,
+      "first_date": "2016-04-04",
+      "last_date": "2024-04-03",
+      "original_path": "/home/claude/rr/CatBoost/SET50/WHA/wha_final2.xlsx"
+    }
+  ],
+  "repository": {
+    "name": "run_sn_economics",
+    "built_utc": "2026-11-27T02:23:33+00:00",
+    "run_folder": "run_20261126_060638"
+  }
+}
