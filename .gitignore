@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.DS_Store
+Thumbs.db
+
+# the results of a new run are written next to the archived ones;
+# the results of the reference run are kept in output/ and results/
+outputs/
+results/rerun_*/
+*.tmp
+~$*.xlsx

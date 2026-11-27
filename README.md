@@ -145,7 +145,18 @@ the libraries, the hashes of the code files and the configuration of the run.
 `manifest.sha256` holds the SHA-256 of every file in this repository, so the package can be
 checked for tampering.
 
-## 9. The results on the server
+## 9. The package reproduces itself
+
+A clean clone of this repository re-runs the cell ADVANC / crash / W5 and reproduces the
+stored result **exactly**: the largest difference over the metrics (RMSE, MASE, cumulative
+return, hit rate) is 0.0, and the chronology (train, validation and test dates and their
+counts) is identical in every column.
+
+The workflow `.github/workflows/reproduce.yml` does that on every push: it re-runs the cell
+from the workbooks in `input/`, compares it with the row stored in `output/data/metrics_per_stock.csv`
+and checks that every test block lies inside the definition of its regime.
+
+## 10. The results on the server
 
 The run writes to PostgreSQL (`forecast_db` on the server) and the tables, the progress table
 and the replication package are served at

@@ -1,0 +1,36 @@
+name: reproduce
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: re-run one cell and compare with the stored result
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: install the libraries
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas scipy scikit-learn catboost openpyxl
+
+      - name: re-run ADVANC, crash, W5
+        env:
+          SET50_DATA_ROOT: input
+        run: |
+          python rerun_leakfree.py --tickers ADVANC --regimes crash --windows 5 \
+                 --models CatBoost RandomWalk --out outputs/smoke
+
+      - name: compare with the result stored in the repository
+        run: python tools/compare_ci.py outputs/smoke
+
+      - name: the labels of the regime are inside the definition
+        run: python tools/check_regime_labels.py
