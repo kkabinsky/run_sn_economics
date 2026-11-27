@@ -34,3 +34,11 @@ jobs:
 
       - name: the labels of the regime are inside the definition
         run: python tools/check_regime_labels.py
+
+      - name: the money management balances its books
+        env:
+          SET50_DATA_ROOT: input
+        run: |
+          python run_mm.py --run outputs/smoke --regimes crash --windows 5 \
+                 --models CatBoost RandomWalk --data-root input
+          python -c "import pandas as pd; m = pd.read_csv('outputs/smoke/mm/mm_metrics.csv'); assert bool(m['accounting_ok'].all()), 'the books do not balance'; print('the books balance')" 

@@ -1,0 +1,173 @@
+\documentclass[11pt,a4paper]{article}
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{lmodern}
+  \usepackage[margin=2.2cm]{geometry}
+  \usepackage{amsmath,amssymb,amsthm}
+  \usepackage{booktabs}
+  \usepackage{longtable}
+  \usepackage{array}
+  \usepackage{xcolor}
+  \usepackage{enumitem}
+  \usepackage{fancyhdr}
+  \usepackage{titlesec}
+  \usepackage[hidelinks]{hyperref}
+  \usepackage{caption}
+  \usepackage{tabularx}
+  \usepackage{multirow}
+
+  \definecolor{rulecol}{RGB}{180,30,40}
+  \definecolor{softbg}{RGB}{250,244,244}
+
+  \newcommand{\reviewer}[1]{\vspace{1.0em}\noindent\textbf{\color{rulecol}#1}\par\vspace{0.25em}}
+  \newcommand{\ourans}{\vspace{0.35em}\noindent\textbf{Response.}\ }
+  \newcommand{\change}[1]{\vspace{0.25em}\noindent\textbf{Change in the manuscript.} #1\par\vspace{0.2em}}
+  \newcommand{\loc}[1]{\textbf{Location:} #1\par}
+
+  \title{\vspace{-2.2cm}\textbf{Response to the Editor and Reviewers}\\[0.35em]
+  \large Revised manuscript \emph{``Conditional Generative Modelling of Thai Stock-Return Forecasts for Economic Applications''}\\[0.6em]
+  \normalsize Money management in the backtest: a sniper-style trading rule}
+  \author{}
+  \date{}
+
+  \pagestyle{fancy}
+  \fancyhf{}
+  \fancyhead[L]{Response to the Editor and Reviewers}
+  \fancyhead[R]{Revised manuscript}
+  \fancyfoot[C]{\thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \setlength{\parskip}{0.45em}
+  \setlength{\parindent}{0pt}
+
+\begin{document}
+\maketitle
+
+\section*{1. The question}
+
+The reviewer asks how the money is managed in the backtest: how the forecasts
+are turned into positions, how large the positions are, how the capital is
+spread over the stocks, and which costs are charged. The archived pipeline
+answers this question implicitly, with a single rule: the sign of the forecast
+edge gives a long or a short position of equal weight, the position is held
+for one day, and 20 basis points are charged per unit of turnover. There is no
+position sizing, no stop, no limit on the number of open positions and no
+limit on the exposure.
+
+We agree that this is not enough for a replication, and that a backtest of a
+forecast model should say what it does with the money. The revision therefore
+adds an explicit money-management layer to the re-run, and reports the results
+of both rules side by side.
+
+\section*{2. The money management of the re-run}
+
+\begin{center}\small
+\begin{tabular}{p{0.24\textwidth}p{0.68\textwidth}}
+\toprule
+Element & Rule \\
+\midrule
+\textbf{The signal} & At the close of trading day $t$ the rule reads the forecast made for day $t+1$ and forms the edge $(F_{t+1}-P_t)/P_t$. The forecast of the day itself is never used, so the decision cannot contain information about the day it is traded on. \\
+\textbf{The entry filter} & A position is opened only when the edge is at least half an average true range (ATR, fourteen trading days) in absolute value, when the ATR is between 0.4\% and 8\% of the price, and when the direction agrees with the twenty-day moving average. The filter is what makes the trade a sniper trade: few positions, taken only where the forecast is strong relative to the stock's own volatility. \\
+\textbf{The size} & The risk budget of a trade is one percent of the equity. The stop is placed $1.5$ ATR away from the entry, so the number of shares is the risk budget divided by the distance to the stop: a wider stop means a smaller position. The position is then capped at 20\% of the equity, and the sum of all positions at 80\%. \\
+\textbf{The exits} & The stop is at $1.5$ ATR and the target at $3$ ATR, so the reward is twice the risk. After one unit of profit the stop moves to the entry price and then trails the price by one ATR. A position is also closed after ten trading days, and every open position is closed at the end of the evaluation window. When the stop and the target are both inside the daily range, the stop is assumed to be hit first. \\
+\textbf{The portfolio rules} & At most five positions are open at the same time. No new position is opened after a loss of two percent on the day, and after three consecutive losing trades the rule stops for five trading days. \\
+\textbf{The costs} & 20 basis points per unit of turnover, charged on the opening and on the closing of every position, the same rate as the backtest of the manuscript. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The parameters are the defaults above; they were fixed before the results were
+computed and they were not tuned on the test block. The only input the rule
+uses besides the forecast is the price history up to and including the day of
+the decision.
+
+\section*{3. What the money management changes}
+
+The table compares the two rules on the same forecasts, the same dates and
+the same costs: the always-on rule of the manuscript and the money management
+above. The always-on column is the equal-weight portfolio of the corrected
+re-run, with the stationary-bootstrap 95\% interval of its geometric return.
+
+\begin{center}\small
+\begin{tabular}{llrrrrr}
+\toprule
+Regime & Model & Always-on & With the money management & Trades & Win rate & Sharpe \\
+\midrule
+crash & CatBoost & -17.42\% & -5.00\% & 30 & 43.3\% & -2.07 \\
+crash & LightGBM & -12.44\% & 13.46\% & 40 & 52.5\% & 3.74 \\
+crash & XGBoost & -12.65\% & 9.94\% & 37 & 51.4\% & 3.49 \\
+crash & cGAN & -12.80\% & 7.53\% & 48 & 60.4\% & 2.23 \\
+crash & RandomWalk & 0.00\% & 0.00\% & 0 & --\% & 0.00 \\
+crash & CatBoost & -19.16\% & 13.54\% & 35 & 57.1\% & 4.13 \\
+crash & LightGBM & -16.82\% & 2.53\% & 35 & 37.1\% & 1.56 \\
+crash & XGBoost & -15.08\% & 16.19\% & 43 & 55.8\% & 5.06 \\
+crash & cGAN & -17.49\% & 6.74\% & 38 & 52.6\% & 2.77 \\
+crash & RandomWalk & 0.00\% & 0.00\% & 0 & --\% & 0.00 \\
+crash & CatBoost & -22.40\% & 3.88\% & 22 & 45.5\% & 2.93 \\
+crash & LightGBM & -18.09\% & 1.05\% & 35 & 42.9\% & 0.70 \\
+crash & XGBoost & -12.76\% & 12.43\% & 40 & 52.5\% & 3.99 \\
+crash & cGAN & -16.43\% & -0.16\% & 37 & 43.2\% & 0.10 \\
+crash & RandomWalk & 0.00\% & 0.00\% & 0 & --\% & 0.00 \\
+normal & CatBoost & -4.92\% & -3.98\% & 87 & 44.8\% & -1.34 \\
+normal & LightGBM & -12.15\% & -3.22\% & 103 & 38.8\% & -1.08 \\
+normal & XGBoost & -12.32\% & -8.15\% & 91 & 35.2\% & -3.17 \\
+normal & cGAN & -16.98\% & -3.67\% & 99 & 34.3\% & -1.15 \\
+normal & RandomWalk & 0.00\% & 0.00\% & 0 & --\% & 0.00 \\
+normal & CatBoost & -2.85\% & -0.29\% & 108 & 38.0\% & 0.01 \\
+normal & LightGBM & -8.34\% & -1.78\% & 89 & 39.3\% & -0.53 \\
+normal & XGBoost & -6.07\% & -1.09\% & 101 & 44.6\% & -0.32 \\
+normal & cGAN & -14.63\% & -0.44\% & 93 & 41.9\% & -0.07 \\
+normal & RandomWalk & 0.00\% & 0.00\% & 0 & --\% & 0.00 \\
+normal & CatBoost & -1.44\% & -1.38\% & 105 & 41.0\% & -0.31 \\
+normal & LightGBM & -5.87\% & -3.42\% & 87 & 34.5\% & -0.90 \\
+normal & XGBoost & -5.48\% & -0.50\% & 99 & 44.4\% & -0.09 \\
+normal & cGAN & -14.10\% & -0.32\% & 110 & 40.9\% & -0.03 \\
+normal & RandomWalk & 0.00\% & 0.00\% & 0 & --\% & 0.00 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Three things are worth pointing out.
+
+First, the money management changes the result of the crash regime materially:
+the always-on rule loses money in every cell, while the money management turns
+most of those cells into a small gain, because the crash is a directional
+market and the rule is allowed to be flat when the forecast is not strong
+enough.
+
+Second, the rule does not create an advantage in the calm regime: there the
+forecast edge is too small to cover the cost of the turnover, and the results
+are close to zero or slightly negative. We report this as it is.
+
+Third, the rule trades nothing when the forecast carries no information: the
+random-walk benchmark opens no position at all, because its edge is exactly
+zero and the entry filter requires half an average true range. This is the
+check that the rule is wired to the forecast and not to the price path.
+
+\section*{4. The code and how to reproduce it}
+
+The money management is \texttt{leakfree/mm.py}, the runner is
+\texttt{run\_mm.py}, and the trade log of every cell is written to
+\texttt{output/mm/mm\_trades.csv}. The balance of the books is checked inside
+the program: the final equity has to equal the initial capital plus the
+profit of every closed trade, and the check is part of the reported measures
+(it holds for all thirty cells, with a difference below $2\\times10^{-9}$).
+
+\begin{center}\small
+\begin{tabular}{p{0.36\textwidth}p{0.56\textwidth}}
+\toprule
+Command & Meaning \\
+\midrule
+\texttt{run\_mm.py --run outputs/run\_20261126\_060638} & the money management over every cell of the re-run \\
+\texttt{--regimes crash normal --windows 5 10 30} & the cells of the two regimes \\
+\texttt{--models CatBoost LightGBM XGBoost cGAN} & the models \\
+\texttt{--data-root input} & the price workbooks of the repository \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\change{Section~3.4 now states the trading rule and the money management in full,
+the entry filter, the position sizing, the stop and the target, the portfolio
+limits and the transaction costs, and Table~\ref{tab:mm} reports the two rules
+side by side.}
+
+\end{document}

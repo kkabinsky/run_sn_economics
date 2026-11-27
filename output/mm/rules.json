@@ -1,0 +1,22 @@
+{
+  "initial_capital": 1000000.0,
+  "risk_per_trade": 0.01,
+  "atr_window": 14,
+  "stop_atr": 1.5,
+  "target_atr": 3.0,
+  "trail_atr": 1.0,
+  "breakeven_at_r": 1.0,
+  "max_holding_days": 10,
+  "max_positions": 5,
+  "max_weight": 0.2,
+  "max_gross": 0.8,
+  "daily_loss_limit": 0.02,
+  "losses_before_cooldown": 3,
+  "cooldown_days": 5,
+  "edge_atr": 0.5,
+  "min_atr_pct": 0.004,
+  "max_atr_pct": 0.08,
+  "trend_filter": true,
+  "trend_window": 20,
+  "cost_bps": 20.0
+}

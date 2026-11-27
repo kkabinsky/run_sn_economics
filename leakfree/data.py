@@ -32,6 +32,9 @@ class PriceSeries:
     price_column: str
     sheet: str
     sha256: str
+    open: np.ndarray | None = None    # float, when the workbook has it
+    high: np.ndarray | None = None    # float, when the workbook has it
+    low: np.ndarray | None = None     # float, when the workbook has it
 
     def __len__(self) -> int:
         return len(self.close)
@@ -141,6 +144,18 @@ def load_price_series(ticker: str, root: Path | None = None) -> PriceSeries:
     frame = pd.DataFrame({"date": dates, "close": close})
     frame = frame.drop_duplicates(subset="date", keep="last").reset_index(drop=True)
 
+    # the open, high and low, when the workbook has them: the money management
+    # needs the daily range to place the stop and the target
+    extra = {}
+    for name in ("open", "high", "low"):
+        column = _pick_column(frame.columns, [name, name.upper(), name.capitalize()], name)
+        if column is None:
+            extra[name] = None
+            continue
+        values = pd.to_numeric(frame[column], errors="coerce")
+        values = values.reindex(frame.index).fillna(frame["close"])
+        extra[name] = values.to_numpy(dtype=float)
+
     return PriceSeries(
         ticker=ticker,
         path=path,
@@ -149,6 +164,9 @@ def load_price_series(ticker: str, root: Path | None = None) -> PriceSeries:
         price_column=str(price_col),
         sheet=str(sheet_used),
         sha256=file_sha256(path),
+        open=extra.get("open"),
+        high=extra.get("high"),
+        low=extra.get("low"),
     )
 
 
