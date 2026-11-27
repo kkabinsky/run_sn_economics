@@ -571,6 +571,7 @@ The table is \nolinkurl{data/r3m4/pooled_tests.csv} of the release, which
 also gives the standard errors, the unadjusted $p$-values, the number of
 paired observations and the per-stock counts with the lag-robust variance.
 
+\newpage
 \section*{4. The money management of the backtest}
 
 \point{4}{How the forecasts are turned into positions}{R3.M2}
@@ -656,24 +657,34 @@ normal & RandomWalk & 0.00\% & 0.00\% & 0 & --\% & 0.00 \\
 Three things are worth pointing out. First, the money management changes the
 result of the crash regime materially: the always-on rule loses money in
 every cell, while the money management turns most of those cells into a
-small gain, because the crash is a directional market and the rule is allowed
-to be flat when the forecast is not strong enough. Second, the rule does not
-create an advantage in the calm regime, and the reason is a cost, not a
-signal, effect.
-In the calm regime the rule opened 1,204 trades and won
-39.5\% of them. The winning trades moved
+small gain. The reason is the nature of the regime. The crash window is a
+directional market: over its 31 trading days the 39 stocks fell by
+32.2 per cent on average and not one of
+them rose, the worst of them losing 51.2 per cent.
+A rule that is allowed to be flat when the forecast is not strong enough can
+hold a short position through a market that keeps moving in one direction,
+and that is what it does.
+
+Second, the same rule does not create an advantage in the calm regime,
+because the calm regime is not directional:
+over its 101 trading days the same 39 stocks moved by
+-4.2 per cent on average, 12 of them
+rose and 27 fell, so there is no common direction to
+hold a position in.
+The rule still trades, 1,204 trades, and wins
+39.5 per cent of them; the winning trades moved
 221 basis points and the losing ones
 134 basis points, so the directional edge of a
 trade is 7 basis points, against a cost of about
-40 basis points for the round trip: the edge covers
-only 0.17 of the cost. In the crash regime the same
+40 basis points for the round trip. The edge covers
+0.17 of the cost, and a rule cannot be profitable when
+the edge does not pay for the turnover. In the crash regime the same
 computation gives an edge of 129 basis points against
-the same cost, that is 3.3 times the cost, which is
-why the rule works there and not in the calm regime. The forecast of the
-models simply does not separate the two outcomes enough in the calm
-regime to pay for the turnover, which is the same conclusion that the
-Diebold--Mariano tests of Point~3 reach for those cells. We report this
-as it is.
+the same cost, that is 3.3 times the cost. This is
+why the rule works in the crash and not in the calm regime, and it is
+the same conclusion that the Diebold--Mariano tests of Point~3 reach for
+those cells. We report this as it is.
+
 Third, the rule trades nothing when the forecast carries no information: the
 random-walk benchmark opens no position at all, because its edge is exactly
 zero and the entry filter requires half an average true range.

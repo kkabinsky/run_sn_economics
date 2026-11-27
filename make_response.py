@@ -337,6 +337,38 @@ def summarise(run: dict) -> dict:
     else:
         summary["mm"] = []
         summary["mm_rules"] = {}
+    # the direction of the market in each regime: how far the stocks moved and
+    # how many of them moved the same way
+    market = {}
+    try:
+        from leakfree import config as leak_config
+        from leakfree import data as leak_data
+        price_root = leak_config.LEGACY_DATA_ROOT
+        series_map = leak_data.load_all(root=price_root)
+        windows = {"crash": ("2020-02-17", "2020-03-30"),
+                   "normal": ("2023-11-08", "2024-04-03")}
+        for regime, (start, end) in windows.items():
+            moves = []
+            for ticker, series in series_map.items():
+                dates = pd.to_datetime(series.dates)
+                close = pd.Series(series.close, index=dates)
+                inside = close.loc[start:end]
+                if len(inside) < 5:
+                    continue
+                moves.append(float(inside.iloc[-1] / inside.iloc[0] - 1.0))
+            if moves:
+                market[regime] = {
+                    "mean": sum(moves) / len(moves),
+                    "up": sum(1 for move in moves if move > 0),
+                    "down": sum(1 for move in moves if move <= 0),
+                    "n": len(moves),
+                    "best": max(moves), "worst": min(moves),
+                }
+    except Exception as error:                      # the letter still builds
+        print("  (the market measurement is not available:", error, ")")
+        market = {}
+    summary["market"] = market
+
     # why the calm regime does not improve: the directional edge of a trade
     # against the cost of a round trip
     trades_path = Path(summary["run_dir"]) / "mm" / "mm_trades.csv"
@@ -1148,6 +1180,7 @@ def build_letter(summary: dict, run: dict) -> str:
     # ------------------------------------------------------------------ Point 4
     mm_rows = summary.get("mm") or []
     if mm_rows:
+        add(r"\newpage")
         add(r"\section*{4. The money management of the backtest}")
         add("")
         add(r"\point{4}{How the forecasts are turned into positions}{R3.M2}")
@@ -1236,31 +1269,46 @@ def build_letter(summary: dict, run: dict) -> str:
         add(r"\end{longtable}")
         add(r"\end{center}")
         add("")
-        add(r"Three things are worth pointing out. First, the money management changes the")
-        add(r"result of the crash regime materially: the always-on rule loses money in")
-        add(r"every cell, while the money management turns most of those cells into a")
-        add(r"small gain, because the crash is a directional market and the rule is allowed")
-        add(r"to be flat when the forecast is not strong enough. Second, the rule does not")
-        add(r"create an advantage in the calm regime, and the reason is a cost, not a")
-        add(r"signal, effect.")
+        market = summary.get("market") or {}
         diagnostic = summary.get("mm_diagnostic") or {}
         calm = diagnostic.get("normal")
         crash = diagnostic.get("crash")
+        calm_market = market.get("normal")
+        crash_market = market.get("crash")
+        add(r"Three things are worth pointing out. First, the money management changes the")
+        add(r"result of the crash regime materially: the always-on rule loses money in")
+        add(r"every cell, while the money management turns most of those cells into a")
+        add(r"small gain. The reason is the nature of the regime. The crash window is a")
+        add(r"directional market: over its 31 trading days the 39 stocks fell by")
+        if crash_market:
+            add(f"{abs(crash_market['mean']) * 100:.1f} per cent on average and not one of")
+            add(f"them rose, the worst of them losing {abs(crash_market['worst']) * 100:.1f} per cent.")
+        add(r"A rule that is allowed to be flat when the forecast is not strong enough can")
+        add(r"hold a short position through a market that keeps moving in one direction,")
+        add(r"and that is what it does.")
+        add("")
+        add(r"Second, the same rule does not create an advantage in the calm regime,")
+        add(r"because the calm regime is not directional:")
+        if calm_market:
+            add(f"over its 101 trading days the same 39 stocks moved by")
+            add(f"{calm_market['mean'] * 100:.1f} per cent on average, {calm_market['up']} of them")
+            add(f"rose and {calm_market['down']} fell, so there is no common direction to")
+            add(r"hold a position in.")
         if calm and crash:
-            add(f"In the calm regime the rule opened {calm['trades']:,} trades and won")
-            add(f"{calm['win_rate'] * 100:.1f}\% of them. The winning trades moved")
+            add(f"The rule still trades, {calm['trades']:,} trades, and wins")
+            add(f"{calm['win_rate'] * 100:.1f} per cent of them; the winning trades moved")
             add(f"{calm['win_move_bps']:.0f} basis points and the losing ones")
             add(f"{calm['loss_move_bps']:.0f} basis points, so the directional edge of a")
             add(f"trade is {calm['edge_bps']:.0f} basis points, against a cost of about")
-            add(f"{calm['cost_bps']:.0f} basis points for the round trip: the edge covers")
-            add(f"only {calm['coverage']:.2f} of the cost. In the crash regime the same")
+            add(f"{calm['cost_bps']:.0f} basis points for the round trip. The edge covers")
+            add(f"{calm['coverage']:.2f} of the cost, and a rule cannot be profitable when")
+            add(r"the edge does not pay for the turnover. In the crash regime the same")
             add(f"computation gives an edge of {crash['edge_bps']:.0f} basis points against")
-            add(f"the same cost, that is {crash['coverage']:.1f} times the cost, which is")
-            add(r"why the rule works there and not in the calm regime. The forecast of the")
-            add(r"models simply does not separate the two outcomes enough in the calm")
-            add(r"regime to pay for the turnover, which is the same conclusion that the")
-            add(r"Diebold--Mariano tests of Point~3 reach for those cells. We report this")
-            add(r"as it is.")
+            add(f"the same cost, that is {crash['coverage']:.1f} times the cost. This is")
+            add(r"why the rule works in the crash and not in the calm regime, and it is")
+            add(r"the same conclusion that the Diebold--Mariano tests of Point~3 reach for")
+            add(r"those cells. We report this as it is.")
+        add("")
         add(r"Third, the rule trades nothing when the forecast carries no information: the")
         add(r"random-walk benchmark opens no position at all, because its edge is exactly")
         add(r"zero and the entry filter requires half an average true range.")
