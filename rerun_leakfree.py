@@ -226,9 +226,8 @@ def main() -> int:
         tickers = tickers[: args.limit]
     stamp = datetime.now(timezone.utc)
     run_id = args.run_id or f"run_{stamp:%Y%m%d_%H%M%S}"
+    # a relative --out is relative to the current directory, as in the shell
     run_dir = Path(args.out) if args.out else config.DEFAULT_OUTPUT_ROOT / f"run_{stamp:%Y%m%d_%H%M%S}"
-    if not run_dir.is_absolute():
-        run_dir = config.DEFAULT_OUTPUT_ROOT / run_dir
     data_dir = run_dir / "data"
     pred_dir = data_dir / "predictions"
     data_dir.mkdir(parents=True, exist_ok=True)
