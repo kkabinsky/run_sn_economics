@@ -26,7 +26,10 @@ import json
 import os
 from datetime import datetime, timezone
 
-import psycopg
+try:                       # the database is an optional extra
+    import psycopg
+except ModuleNotFoundError:  # the run works without it
+    psycopg = None
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS stock (
@@ -190,6 +193,10 @@ class Database:
     """Thin wrapper over psycopg with the writes the runner needs."""
 
     def __init__(self, url: str | None = None):
+        if psycopg is None:
+            raise RuntimeError(
+                "the database storage needs the driver: "
+                "pip install 'psycopg[binary]'")
         self.url = url or default_url()
         if not self.url:
             raise RuntimeError("no database URL: set FORECAST_DATABASE_URL or pass --db")
